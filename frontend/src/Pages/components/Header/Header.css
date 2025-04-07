@@ -1,0 +1,295 @@
+/* .header-container {
+    background-color: rgba(57, 68, 107, 1);
+  }
+  header .logo {
+    text-decoration: none;
+  }
+  header .row {
+    margin: 0px !important;
+  }
+  header {
+    width: 100%;
+    height: 70px;
+    background: white; 
+    position: fixed;
+    top:0px;
+    left: 0px;
+  }
+  header .logo img {
+    width: 70px;
+  }
+  header button.rounded-circle {
+    min-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    background: #f0f5ff;
+    color: #292929;
+    font-size:00px !important;
+  }
+  .myAcc .userImg .rounded-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: #ff7300;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+  }
+  
+  .myAcc .userImg .rounded-circle svg {
+    width: 100%;
+    height: 100%;
+    color: #000000;
+    transition: color 0.3s ease;
+  }
+  
+  .myAcc .userImg .rounded-circle:hover {
+    transform: translateY(-4px); 
+    box-shadow: 0 0 12px rgba(255, 115, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3); 
+  }
+  
+  .myAcc .userImg .rounded-circle:hover svg {
+    color: #ffffff;
+  }
+  header button.rounded-circle {
+  width: 48px !important;
+  height: 48px !important;
+}
+  
+  
+   */
+
+/* Common variables to match login page */
+:root {
+  --primary-color: #e48110;
+  --primary-light: rgb(255, 180, 18);
+  --secondary-color: #ecc94b;
+  --dark-blue: rgba(18, 30, 71, 1);
+  --medium-blue: rgba(57, 68, 107, 1);
+  --light-blue: rgba(49, 71, 99, 1);
+  --sidebar-blue: rgba(18, 30, 71, 1);
+  --sidebar-hover: rgba(57, 68, 107, 1);
+  --sidebar-active:rgba(49, 71, 99, 1);
+  --button-blue: #4299e1;
+  --button-hover: #2b6cb0;
+  --input-bg: #2d3748;
+  --text-light: white;
+  --text-dark: #292929;
+  --text-muted: #718096;
+  --bg-light: #d6c8b2;
+  --bg-panel: white;
+  --border-radius-lg: 20px;
+  --border-radius-md: 15px;
+  --border-radius-sm: 8px;
+  --box-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  --box-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.25);
+  --transition-speed: 0.3s;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', 'Open Sans', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+body.dashboard-body {
+  background-color: var(--bg-light);
+  background-image: 
+    linear-gradient(120deg, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
+    radial-gradient(circle at top right, rgba(74, 124, 165, 0.1), transparent 60%),
+    radial-gradient(circle at bottom left, rgba(228, 129, 16, 0.1), transparent 60%);
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+header {
+  width: 100%;
+  height: 70px;
+  background: linear-gradient(135deg, var(--dark-blue), var(--medium-blue));
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: all var(--transition-speed);
+}
+
+.header-container {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+.logo {
+  margin-left: 2rem;
+}
+.myAcc {
+  position: absolute;
+  right: 4rem; 
+  top: 50%; 
+  transform: translateY(-50%); 
+}
+
+.myAcc .userImg {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; 
+}
+.logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  display: flex;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(228, 129, 16, 0.3);
+  animation: pulseLogo 3s infinite alternate;
+  margin-left: 2rem;
+  transition: background 1s ease, transform 1s ease;
+}
+
+
+.logo:hover {
+  background: linear-gradient(135deg, rgb(255, 208, 0));
+  transform: scale(1.05); 
+}
+
+header .logo img {
+  width: 70px;
+  height: auto;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+  transition: filter var(--transition-speed);
+}
+
+
+header button.rounded-circle {
+  min-width: 48px !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f5f7fa, #e0e6ed);
+  color: var(--text-dark);
+  border: none;
+  box-shadow: var(--box-shadow-sm);
+  transition: all var(--transition-speed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  
+}
+header button.rounded-circle svg{
+  width: 100%;
+  height: 100%;
+}
+
+
+header button.rounded-circle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity var(--transition-speed);
+}
+
+header button.rounded-circle:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+header button.rounded-circle:hover::before {
+  opacity: 1;
+}
+
+header button.rounded-circle:active {
+  transform: translateY(0);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.myAcc .userImg .rounded-circle {
+  width: 48px !important;
+  height: 48px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  box-shadow: 0 3px 8px rgba(228, 129, 16, 0.4);
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  position: relative;
+  transition: all var(--transition-speed);
+}
+
+.myAcc .userImg .rounded-circle::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--transition-speed);
+}
+
+.myAcc .userImg .rounded-circle svg {
+  width: 100%;
+  height: 100%;
+  color: #ffffff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  transition: all var(--transition-speed);
+}
+
+.myAcc .userImg .rounded-circle:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 6px 15px rgba(228, 129, 16, 0.5);
+}
+
+.myAcc .userImg .rounded-circle:hover::before {
+  opacity: 1;
+}
+
+.myAcc .userImg .rounded-circle:hover svg {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+}
+
+.myAcc .userImg .rounded-circle:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 5px rgba(228, 129, 16, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  header button.rounded-circle {
+    background: #e48110;
+    color: #e2e8f0;
+  }
+}
+

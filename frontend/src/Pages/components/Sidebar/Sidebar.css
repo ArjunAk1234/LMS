@@ -1,0 +1,283 @@
+/* .main .sidebarWrapper{
+    width: 10%;
+    flex: 0 0 30%;
+    transition: all 0.3s ease-in-out;
+
+}
+.main  .sidebarWrapper .sidebar{
+    width:10%;
+    height:100vh;
+    position: fixed;
+    top:70px;
+    left:0px;
+    background: rgb(74, 124, 165);
+} 
+.main .sidebarWrapper .sidebar ul {
+    margin-top: 20px;
+    margin-bottom: 0px;
+    padding-left: 0;
+}
+
+.main .sidebarWrapper .sidebar ul li {
+    list-style: none;
+}
+
+.main .sidebarWrapper .sidebar ul li button {
+    color: #000000;
+    text-align: left;
+    justify-content: flex-start;
+    width: 100%;
+    padding: 12px 35px !important;
+    border-radius: 0px !important;
+    align-items: center;
+    text-transform: capitalize !important;
+    font-weight: 700 !important;
+    font-family: "Open Sans", sans-serif !important;
+}
+.main .sidebarWrapper .sidebar ul li button .icon{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    margin-right:10px;
+} 
+.main .sidebarWrapper .sidebar ul li button .icon svg{
+    color:#000;
+    opacity: 0.8;
+    font-size: 50px;
+} */
+
+/* ===== Enhanced Sidebar ===== */
+.main {
+    display: flex;
+    padding-top: 70px; /* Same as header height */
+  }
+  
+  .main .sidebarWrapper {
+    width: 0%;
+    flex: 0 0 13%;
+    transition: all var(--transition-speed);
+  }
+  
+  .main .sidebarWrapper .sidebar {
+    width: 230px; /* Starting width */
+    height: calc(100vh - 70px); /* Full height minus header */
+    position: fixed;
+    top: 70px;
+    left: 0;
+    background: linear-gradient(180deg, var(--sidebar-blue), var(--light-blue));
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 900;
+    transition: all var(--transition-speed);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) transparent;
+  }
+  
+  /* Collapsed state */
+  .main.sidebar-collapsed .sidebarWrapper .sidebar {
+    width: 70px;
+  }
+  
+  /* Scrollbar styling */
+  .main .sidebarWrapper .sidebar::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  .main .sidebarWrapper .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .main .sidebarWrapper .sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(228, 129, 16, 0.5);
+    border-radius: 20px;
+  }
+  
+  /* Brand/Logo area at top of sidebar */
+  .sidebar-brand {
+    padding: 20px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .toggle-sidebar-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all var(--transition-speed);
+  }
+  
+  .toggle-sidebar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(180deg);
+  }
+  
+
+  
+  .main .sidebarWrapper .sidebar ul li {
+    list-style: none;
+    margin-bottom: 5px;
+    position: relative;
+  }
+  
+  /* Menu item hover indicator */
+  .main .sidebarWrapper .sidebar ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 0;
+    background: linear-gradient(to bottom, var(--primary-color), var(--primary-light));
+    border-radius: 0 2px 2px 0;
+    transition: height var(--transition-speed);
+  }
+  
+  .main .sidebarWrapper .sidebar ul li:hover::before,
+  .main .sidebarWrapper .sidebar ul li.active::before {
+    height: 100%;
+  }
+  
+  /* Menu buttons */
+  .main .sidebarWrapper .sidebar ul li button {
+    color: rgba(255, 255, 255, 0.8);
+    text-align: left;
+    justify-content: flex-start;
+    width: 100%;
+    padding: 17px 20px !important;
+    border-radius: 0 !important;
+    border: none;
+    align-items: center;
+    text-transform: capitalize !important;
+    font-weight: 700 !important;
+    font-family: "Open Sans", sans-serif !important;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+    transition: all var(--transition-speed);
+    display: flex;
+    font-size: medium;
+  }
+  .main .sidebarWrapper .sidebar ul {
+    margin-top: 40px; /* Increase from current 20px */
+    margin-bottom: 20px;
+    padding-left: 0;
+  }
+  .main .content{
+    width:80%;
+    flex: 0 0 80% ;
+    transition: all 0.3s ease-in-out;
+    margin-top: 1rem
+}
+.main .content.toggle{
+    width:100%;
+    flex:0 0 100%;
+}
+.main .sidebarWrapper.toggle{
+    width:0%;
+    flex:0 0 0%;
+
+}
+.main .sidebarWrapper.toggle .sidebar{
+    left:-100%;
+
+}
+.main .sidebarWrapper .sidebar{
+    transition: all 0.3s ease-in-out;
+}
+  .main .sidebarWrapper .sidebar ul li button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.05) 50%, 
+      transparent 100%);
+    opacity: 0;
+    transition: opacity var(--transition-speed);
+  }
+  
+  .main .sidebarWrapper .sidebar ul li button:hover {
+    color: white;
+    padding-left: 25px !important;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  .main .sidebarWrapper .sidebar ul li button:hover::before {
+    opacity: 1;
+  }
+  
+  .main .sidebarWrapper .sidebar ul li.active button {
+    color: white;
+    background-color: rgba(0, 0, 0, 0.15);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .main .sidebarWrapper .sidebar ul li button .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-right: 15px;
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.1);
+    transition: all var(--transition-speed);
+  }
+  
+  .main .sidebarWrapper .sidebar ul li button:hover .icon {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .main .sidebarWrapper .sidebar ul li button .icon svg {
+    color: rgba(255, 255, 255, 0.8);
+    opacity: 0.9;
+    font-size: 25px;
+    transition: all var(--transition-speed);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+  }
+.main .sidebarWrapper .sidebar ul li button .icon + {
+  color: rgba(255, 255, 255, 0.8);
+  transition: all var(--transition-speed);
+}
+
+.main .sidebarWrapper .sidebar ul li button:hover {
+  color: var(--primary-light); 
+}
+
+.main .sidebarWrapper .sidebar ul li.active button {
+  color: var(--primary-light);
+}
+
+  @media (max-width: 1024px) {
+    .main .sidebarWrapper .sidebar {
+      width: 220px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .main .sidebarWrapper .sidebar {
+      width: 0;
+      box-shadow: none;
+    }
+    
+    .main.sidebar-mobile-open .sidebarWrapper .sidebar {
+      width: 250px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+  }

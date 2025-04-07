@@ -1,0 +1,80 @@
+/* *{margin:0px; padding:0px;}
+body.dashboard-body {
+    background-color: #ebe9e9;
+  } */
+/* ===== Dashboard Body Content ===== */
+.right-content{
+  padding:20px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-content {
+    margin-left: 220px;
+  }
+  
+  .main.sidebar-collapsed .dashboard-content {
+    margin-left: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0;
+  }
+  
+  .main.sidebar-collapsed .dashboard-content,
+  .main.sidebar-mobile-open .dashboard-content {
+    margin-left: 0;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* JavaScript for sidebar functionality */
+/*
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle sidebar for desktop
+  const toggleButton = document.querySelector('.toggle-sidebar-btn');
+  const mainContainer = document.querySelector('.main');
+  
+  if (toggleButton && mainContainer) {
+    toggleButton.addEventListener('click', function() {
+      mainContainer.classList.toggle('sidebar-collapsed');
+    });
+  }
+  
+  // Mobile sidebar toggle
+  const mobileToggle = document.querySelector('.mobile-menu-btn');
+  
+  if (mobileToggle && mainContainer) {
+    mobileToggle.addEventListener('click', function() {
+      mainContainer.classList.toggle('sidebar-mobile-open');
+    });
+  }
+  
+  // Close sidebar when clicking outside on mobile
+  document.addEventListener('click', function(event) {
+    if (mainContainer.classList.contains('sidebar-mobile-open')) {
+      const sidebar = document.querySelector('.sidebar');
+      const mobileToggle = document.querySelector('.mobile-menu-btn');
+      
+      if (!sidebar.contains(event.target) && !mobileToggle.contains(event.target)) {
+        mainContainer.classList.remove('sidebar-mobile-open');
+      }
+    }
+  });
+  
+  // Active menu item
+  const currentPath = window.location.pathname;
+  const menuItems = document.querySelectorAll('.sidebar ul li button');
+  
+  menuItems.forEach(item => {
+    const itemPath = item.getAttribute('data-path');
+    if (itemPath && currentPath.includes(itemPath)) {
+      item.parentElement.classList.add('active');
+    }
+  });
+});
+*/

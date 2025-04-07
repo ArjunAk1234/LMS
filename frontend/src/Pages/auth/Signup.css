@@ -1,0 +1,261 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
+/* Centering container */
+.signup-container {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-box-align: start;
+  -ms-flex-align: start;
+  align-items: center;
+  min-height: 100vh; /* Fallback for older browsers */
+  min-height: calc(100 * var(--vh, 1vh)); /* Mobile viewport fix */
+  background-image: url("/signup.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 1rem 30rem;
+}
+
+/* signup form styles */
+.signup-form {
+  border: 2px solid #e48110;
+  height: 900px;
+  max-height: 1000px;
+  width: 1500px !important;
+
+  width: 100%; /* Base responsive width */
+  max-width: 1800px; /* Increased from previous value - adjust as needed */
+  padding: 2rem;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  border-radius: 50px;
+  background: #2a3c6d;
+  background: -webkit-linear-gradient(315deg, rgba(18, 30, 71, 1), rgba(57, 68, 107, 1), rgba(49, 71, 99, 1));
+  background: -moz-linear-gradient(315deg, rgba(18, 30, 71, 1), rgba(57, 68, 107, 1), rgba(49, 71, 99, 1));
+  background: -o-linear-gradient(315deg, rgba(18, 30, 71, 1), rgba(57, 68, 107, 1), rgba(49, 71, 99, 1));
+  background: linear-gradient(135deg, rgba(18, 30, 71, 1), rgba(57, 68, 107, 1), rgba(49, 71, 99, 1));
+  color: #333;
+  -webkit-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  position: relative;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+/* Left side containing form elements */
+.form-content {
+  width: 50%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  /* Using margins instead of gap for better compatibility */
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.form-content > * {
+  margin-bottom: 3rem; /* Alternative to gap */
+}
+
+.form-content > *:last-child {
+  margin-bottom: 0; /* Remove margin from last element */
+}
+
+/* Welcome message on the right side */
+.welcome-message {
+  width: 50%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  text-align: center;
+  color: #e48110;
+}
+
+.welcome-message h1 {
+  font-size: 3.5rem;
+  font-weight: 600;
+  color: rgb(255, 180, 18);
+}
+
+/* Headings and text */
+.form-content h1 {
+  font-size: 4rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: rgb(255, 180, 18);
+}
+
+.form-content p {
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.form-content hr {
+  border: none;
+  height: 2px;
+  background-color: #e48110;
+  width: 70%;
+  margin-bottom: 1rem;
+  position: relative;
+  top: -1rem; 
+}
+
+/* Input group layout */
+.input-group {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 400px;
+  /* Using margin instead of gap */
+  border: 2px solid #ecc94b;
+  padding: 0 1rem;
+  border-radius: 8px;
+  height: 3.5rem;
+  background-color: #2d3748;
+}
+
+.input-group label {
+  margin-right: 1rem; /* Replace gap with margin */
+  font-size: 1.25rem;
+  color: #ecc94b;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .input-group label {
+    display: block;
+  }
+}
+
+/* Input fields */
+.input-group input {
+  width: 100%; /* Changed from fixed width */
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1.125rem;
+  color: white;
+  background: transparent;
+}
+
+/* signup button */
+.signup-btn {
+  background-color: #4299e1;
+  color: rgb(255, 255, 255);
+  font-size: 1.125rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-transition: background 0.3s ease;
+  -moz-transition: background 0.3s ease;
+  -o-transition: background 0.3s ease;
+  transition: background 0.3s ease;
+  width: 300px;
+  max-width: 100%; /* For responsiveness */
+}
+
+.signup-btn:hover {
+  background-color: #2b6cb0;
+}
+
+/* Footer link */
+.footer-text {
+  font-size: 1.125rem;
+  color: white;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.footer-text a {
+  color: #ecc94b;
+  font-size: 1.25rem;
+  text-decoration: none;
+}
+
+.footer-text a:hover {
+  text-decoration: underline;
+}
+
+/* Media query for smaller screens */
+@media (max-width: 1200px) {
+  .signup-container {
+    padding: 1rem;
+  }
+  
+  .signup-form {
+    width: 100%;
+    max-width: 95%;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    border-radius: 30px;
+  }
+  
+  .form-content,
+  .welcome-message {
+    width: 100%;
+  }
+  
+  .welcome-message {
+    margin-top: 2rem;
+  }
+  
+  .input-group {
+    width: 90%;
+  }
+}
+
+/* Add this JavaScript to your component for mobile viewport height fix */
+/* 
+document.addEventListener('DOMContentLoaded', function() {
+  // First we get the viewport height and multiply it by 1% to get a value for a vh unit
+  let vh = window.innerHeight * 0.01;
+  // Then we set the value in the --vh custom property to the root of the document
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+  
+  // We listen to the resize event
+  window.addEventListener('resize', () => {
+    // We execute the same script as before
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  });
+});
+*/
