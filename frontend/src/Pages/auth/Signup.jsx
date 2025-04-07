@@ -4,6 +4,8 @@ import { BsEnvelope, BsLock, BsPerson } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Signup.css";
+import { BsEye, BsEyeSlash } from "react-icons/bs";
+
 
 function SignUp() {
   const [signUpData, setSignUpData] = useState({
@@ -15,6 +17,7 @@ function SignUp() {
 
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   function handleUserInput(e) {
     const { name, value } = e.target;
@@ -93,7 +96,7 @@ function SignUp() {
             <BsPerson />
           </label>
           <input
-            type="text"
+            type="textbox"
             name="name"
             id="name"
             placeholder="Enter Name"
@@ -118,20 +121,26 @@ function SignUp() {
           />
         </div>
 
-        <div className="input-group">
-          <label htmlFor="password">
-            <BsLock />
-          </label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="Enter Password"
-            value={signUpData.password}
-            onChange={handleUserInput}
-            required
-          />
-        </div>
+          <div className="input-group password-field">
+            <label htmlFor="password">
+              <BsLock />
+            </label>
+            <input
+              type={showPassword ? "textbox" : "password"} 
+              name="password"
+              id="password"
+              placeholder="Enter Password"
+              value={signUpData.password}
+              onChange={handleUserInput}
+              required
+            />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ cursor: "pointer", marginLeft: "10px" }}
+            >
+              {showPassword ? <BsEyeSlash size={24}/> : <BsEye size={24}/>}
+            </span>
+          </div>
 
         <div className="input-group">
           <label htmlFor="confirmPassword">

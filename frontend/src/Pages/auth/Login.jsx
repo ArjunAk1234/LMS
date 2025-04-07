@@ -1,9 +1,10 @@
 
 import { useState } from "react";
 import { BsEnvelope, BsLock } from "react-icons/bs";
-import { Link,useNavigate} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Login.css";
+import { BsEye, BsEyeSlash } from "react-icons/bs";
 
 function LogIn() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ function LogIn() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   function handleUserInput(e) {
     const { name, value } = e.target;
@@ -32,7 +34,7 @@ function LogIn() {
       if (res.data && res.data.token) {
         const authToken = res.data.token;
         setToken(authToken);
-        
+
         localStorage.setItem("token", authToken);
 
         // Request OTP after successful login
@@ -77,7 +79,7 @@ function LogIn() {
             <p>Please fill this form to log in</p>
           </div>
           <hr />
-  
+
           <div className="input-group">
             <label htmlFor="email">
               <BsEnvelope />
@@ -92,13 +94,13 @@ function LogIn() {
               required
             />
           </div>
-  
-          <div className="input-group">
+
+          <div className="input-group password-field">
             <label htmlFor="password">
               <BsLock />
             </label>
             <input
-              type="password"
+              type={showPassword ? "textbox" : "password"} 
               name="password"
               id="password"
               placeholder="Enter Password"
@@ -106,28 +108,35 @@ function LogIn() {
               onChange={handleUserInput}
               required
             />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ cursor: "pointer", marginLeft: "10px" }}
+            >
+              {showPassword ? <BsEyeSlash size={24}/> : <BsEye size={24}/>}
+            </span>
           </div>
-  
+
+
           {error && <p className="error-text">{error}</p>}
-  
+
           <button type="submit" className="login-btn">
             Log In
           </button>
           <p className="footer-text">
-           Don't have an account?{" "}
-           <Link to={"/signup"}>
-            Signup
+            Don't have an account?{" "}
+            <Link to={"/signup"}>
+              Signup
             </Link>{" "}
-           here
+            here
           </p>
         </div>
-  
+
         {/* Right side welcome message */}
         <div className="welcome-message">
           <h1>Welcome to Summer School !</h1>
         </div>
-    
-      </form> 
+
+      </form>
     </div>
   );
 }

@@ -487,43 +487,6 @@ body {
 }
 
 /* Animated feature list */
-.features-list {
-  list-style: none;
-  text-align: left;
-  width: 80%;
-}
-
-.features-list li {
-  color: var(--text-light);
-  margin-bottom: 1rem;
-  padding-left: 2rem;
-  position: relative;
-  opacity: 0;
-  animation: fadeInUp 0.5s forwards;
-}
-
-.features-list li:nth-child(1) { animation-delay: 0.3s; }
-.features-list li:nth-child(2) { animation-delay: 0.6s; }
-.features-list li:nth-child(3) { animation-delay: 0.9s; }
-
-.features-list li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: var(--primary-light);
-  font-weight: bold;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 /* Footer link with hover effect */
 .footer-text {
@@ -590,21 +553,6 @@ body {
   box-shadow: 0 5px 10px rgba(228, 129, 16, 0.3);
 }
 
-/* Password visibility toggle */
-.password-toggle {
-  background: none;
-  border: none;
-  color: var(--secondary-color);
-  cursor: pointer;
-  padding: 0 0.5rem;
-  font-size: 1.25rem;
-  transition: color 0.3s;
-}
-
-.password-toggle:hover {
-  color: var(--primary-light);
-}
-
 /* Media queries with mobile-first approach */
 /* Tablets */
 @media (max-width: 1200px) {
@@ -667,14 +615,6 @@ body {
     width: 100%;
   }
 }
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text-muted: #a0aec0;
-  }
-}
-
 /* Support for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
