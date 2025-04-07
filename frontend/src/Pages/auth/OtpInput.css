@@ -1,0 +1,326 @@
+/* OTP Input Styling that matches Login.css design language */
+
+.otp-container {
+    width: 100%;
+    max-width: 1100px;
+    min-height: 650px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--border-radius-lg);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+    padding: 3rem;
+    background: linear-gradient(135deg, 
+      rgba(18, 30, 71, 0.9),
+      rgba(57, 68, 107, 0.9),
+      rgba(49, 71, 99, 0.9)
+    );
+    animation: fadeIn 0.4s ease-out;
+  }
+  
+  /* Gradient border effect matching login form */
+  .otp-container::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(225deg, rgba(228, 129, 16, 0.2), rgba(66, 153, 225, 0.2), rgba(18, 30, 71, 0.2));
+    z-index: -1;
+    border-radius: calc(var(--border-radius-lg) + 2px);
+    background-size: 400% 400%;
+    animation: gradientBorder 6s ease infinite;
+  }
+  
+  .otp-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  }
+  
+  .otp-container p {
+    color: var(--text-light);
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  /* OTP Input container */
+  .otp-input-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  
+  /* Individual OTP input boxes */
+  .otpInput {
+    width: 4rem;
+    height: 4rem;
+    border-radius: var(--border-radius-sm);
+    background-color: var(--input-bg);
+    border: none;
+    color: var(--text-light);
+    font-size: 1.75rem;
+    font-weight: 600;
+    text-align: center;
+    caret-color: var(--primary-light);
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Gradient border for each input */
+  .otpInput::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--secondary-color), var(--primary-light));
+    border-radius: calc(var(--border-radius-sm) + 2px);
+    z-index: -1;
+  }
+  
+  .otpInput:focus {
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 180, 18, 0.3);
+    border: 2px solid var(--primary-light);
+  }
+  
+  /* For filled inputs */
+  .otpInput:not(:placeholder-shown) {
+    background-color: rgba(57, 68, 107, 0.95);
+  }
+  
+  /* Success animation for completed OTP */
+  .otp-input-container.complete .otpInput {
+    animation: successPulse 0.5s ease;
+  }
+  
+  @keyframes successPulse {
+    0% {
+      transform: scale(1);
+      border-color: var(--primary-light);
+    }
+    50% {
+      transform: scale(1.05);
+      border-color: #48BB78; /* Success green */
+      box-shadow: 0 0 15px rgba(72, 187, 120, 0.5);
+    }
+    100% {
+      transform: scale(1);
+      border-color: var(--primary-light);
+    }
+  }
+  
+  /* Button for submitting OTP */
+  .otp-submit-btn {
+    width: 300px;
+    max-width: 90%;
+    height: 3.5rem;
+    background: linear-gradient(45deg, var(--button-blue), var(--primary-color));
+    color: var(--text-light);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position:relative;
+    overflow: hidden;
+    z-index: 1;
+    box-shadow: 0 5px 15px rgba(66, 153, 225, 0.3);
+    margin-top: 2rem;
+    margin-left: 22rem;
+  }
+  
+  .otp-submit-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, var(--primary-color), var(--button-blue));
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    z-index: -1;
+  }
+  
+  .otp-submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(66, 153, 225, 0.5);
+  }
+  
+  .otp-submit-btn:hover::before {
+    opacity: 1;
+  }
+  
+  /* Back button */
+  .otp-back-btn {
+    background: transparent;
+    color: var(--text-light);
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .otp-back-btn:hover {
+    color: var(--primary-light);
+    transform: translateX(-5px);
+  }
+  
+  /* Resend OTP link */
+  .resend-otp {
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    font-size: 1rem;
+  }
+  
+  .resend-otp a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    margin-left: 5px;
+    position: relative;
+    transition: color 0.3s;
+  }
+  
+  .resend-otp a::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -4px;
+    left: 0;
+    background: linear-gradient(to right, var(--secondary-color), var(--primary-light));
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s;
+  }
+  
+  .resend-otp a:hover {
+    color: var(--primary-light);
+  }
+  
+  .resend-otp a:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
+  
+  /* Timer for resend OTP */
+  .resend-timer {
+    color: var(--primary-light);
+    font-weight: 600;
+  }
+  
+  /* Error message */
+  .otp-error {
+    color: #FC8181;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  /* Countdown timer animation */
+  .countdown-ring {
+    margin-top: 1rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary-light) var(--progress), rgba(255, 255, 255, 0.2) 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+  
+  .countdown-ring::before {
+    content: "";
+    position: absolute;
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    background: var(--dark-blue);
+  }
+  
+  .countdown-time {
+    position: relative;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 600;
+    z-index: 1;
+  }
+  
+  /* Animations for transitions */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slideIn {
+    from {
+      transform: translateX(50px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 640px) {
+    .otp-input-container {
+      gap: 0.5rem;
+    }
+    
+    .otpInput {
+      width: 3rem;
+      height: 3rem;
+      font-size: 1.5rem;
+    }
+    
+    .otp-container p {
+      font-size: 1.1rem;
+    }
+  }
+  
+  /* Tablet responsiveness */
+  @media (max-width: 1200px) {
+    .otp-container {
+      max-width: 95%;
+      border-radius: 30px;
+    }
+  }
+  
+  /* Support for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }

@@ -21,7 +21,7 @@ const App = () => {
                 <Route path="/" element={<PublicRoute>
                     <div>
                         <h1>Hello, world</h1>
-                        <p>Welcome to React</p>
+                        <p>Welcome to React try /signup</p>
                     </div>
                 </PublicRoute>} />
 

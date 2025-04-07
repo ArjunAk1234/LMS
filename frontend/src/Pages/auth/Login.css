@@ -232,7 +232,28 @@ body {
   background: linear-gradient(to right, var(--primary-color), var(--primary-light));
   border-radius: 2px;
 }
+.otp-container h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--primary-light);
+  text-align: center;
+  letter-spacing: 1px;
+  position: relative;
+  text-shadow: 0 2px 10px rgba(255, 180, 18, 0.3);
+}
 
+.otp-container h1::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(to right, var(--primary-color), var(--primary-light));
+  border-radius: 2px;
+}
 .form-content p {
   color: var(--text-light);
   margin-bottom: 1rem;
