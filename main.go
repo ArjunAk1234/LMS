@@ -24,6 +24,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jung-kurt/gofpdf"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
@@ -69,6 +70,10 @@ type User struct {
 	Role     string `json:"role" bson:"role"`
 	LoggedIn string `json:"LoggedIn" bson:"loggedIn"`
 }
+type LeaderboardEntry struct {
+	Username string `bson:"username"`
+	Points   int    `bson:"points"`
+}
 
 var otpStorage = make(map[string]string)
 var otpMutex sync.Mutex
@@ -78,6 +83,7 @@ var userCollection *mongo.Collection
 var detailsCollection *mongo.Collection
 var coursesCollection *mongo.Collection
 var assignmentsCollection *mongo.Collection
+var leaderboardCollection *mongo.Collection
 
 // Initialize MongoDB connection
 func init() {
@@ -95,6 +101,7 @@ func init() {
 	detailsCollection = client.Database("User2").Collection("details")
 	coursesCollection = client.Database("User2").Collection("courses")
 	assignmentsCollection = client.Database("User2").Collection("assignments")
+	leaderboardCollection = client.Database("User2").Collection("leaderboard")
 	// Ensure base upload directory exists
 	os.MkdirAll("uploads", os.ModePerm)
 }
@@ -332,7 +339,13 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully!"})
+	c.JSON(http.StatusOK, gin.H{"success":true,})
+	leaderboardEntry := bson.M{"username": input.Username, "points": 0}
+	_, err = leaderboardCollection.InsertOne(ctx, leaderboardEntry)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize leaderboard entry"})
+		return
+	}
 }
 
 var jwtKey = []byte("your_secret_key") // Change this to a secure key
@@ -771,67 +784,7 @@ func uploadResource(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Resource uploaded successfully", "file": fileName})
 }
 
-// func uploadTextNote(c *gin.Context) {
-// 	courseName := c.Param("course")
 
-// 	// Check if course exists
-// 	var course Course
-// 	err := coursesCollection.FindOne(context.TODO(), bson.M{"name": courseName}).Decode(&course)
-// 	if err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "Course not found"})
-// 		return
-// 	}
-
-// 	// Get the note content from request
-// 	var note struct {
-// 		Name    string `json:"name"`    // Note filename
-// 		Content string `json:"content"` // Multi-line text content
-// 	}
-// 	if err := c.ShouldBindJSON(&note); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-// 		return
-// 	}
-
-// 	if note.Name == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Note name is required"})
-// 		return
-// 	}
-
-// 	// Create the notes directory for the specific course
-// 	notesDir := filepath.Join("uploads", "courses", courseName, "notes")
-// 	if err := os.MkdirAll(notesDir, os.ModePerm); err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notes directory"})
-// 		return
-// 	}
-
-// 	// Define note file path
-// 	noteFilePath := filepath.Join(notesDir, note.Name+".json")
-
-// 	// Store the content in JSON format
-// 	noteData := map[string]string{
-// 		"content": note.Content, // Multi-line content is preserved
-// 	}
-// 	fileData, _ := json.MarshalIndent(noteData, "", "  ")
-
-// 	// Write to file
-// 	err = os.WriteFile(noteFilePath, fileData, 0644)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save note"})
-// 		return
-// 	}
-
-// 	// Update database with the note entry
-// 	_, err = coursesCollection.UpdateOne(context.TODO(),
-// 		bson.M{"name": courseName},
-// 		bson.M{"$push": bson.M{"notes": note.Name + ".json"}})
-
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update course notes in database"})
-// 		return
-// 	}
-
-//		c.JSON(http.StatusCreated, gin.H{"message": "Note added successfully", "note": note.Name + ".json"})
-//	}
 func uploadTextNote(c *gin.Context) {
 	courseName := c.Param("course")
 
@@ -888,27 +841,7 @@ func uploadTextNote(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Note added successfully", "note": note.Name + ".txt"})
 }
 
-// func downloadNotes(c *gin.Context) {
-// 	courseName := c.Param("course")
-// 	noteName := c.Param("note")
 
-// 	noteFilePath := filepath.Join("uploads", "courses", courseName, "notes", noteName)
-
-// 	if _, err := os.Stat(noteFilePath); os.IsNotExist(err) {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "Note not found"})
-// 		return
-// 	}
-
-// 	// Read the note file
-// 	fileContent, err := os.ReadFile(noteFilePath)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read note file"})
-// 		return
-// 	}
-
-//		// Return the note content in JSON
-//		c.Data(http.StatusOK, "application/json", fileContent)
-//	}
 func downloadNotes(c *gin.Context) {
 	courseName := c.Param("course")
 	noteName := c.Param("note")
@@ -1186,12 +1119,14 @@ func uploadAssignment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Assignment submitted successfully", "file": handler.Filename})
 }
+
+
 func checkAssignmentSubmission(c *gin.Context) {
 	studentName := c.Param("student")
 	courseName := c.Param("course")
 	assignmentName := c.Param("assignment")
 
-	// ✅ Check if the assignment exists in the database
+	// Find assignment in DB
 	filter := bson.M{"coursename": courseName, "assignmentname": assignmentName}
 	var existingAssignment bson.M
 	err := assignmentsCollection.FindOne(context.TODO(), filter).Decode(&existingAssignment)
@@ -1200,18 +1135,39 @@ func checkAssignmentSubmission(c *gin.Context) {
 		return
 	}
 
-	// ✅ Check if the student has already submitted the assignment
-	submissions := existingAssignment["submissions"].([]interface{})
-	for _, submission := range submissions {
-		submissionMap := submission.(bson.M)
-		if submissionMap["student"] == studentName {
-			// Assignment is submitted
-			c.JSON(http.StatusOK, gin.H{"message": "Submitted"})
+	// Retrieve submissions safely
+	submissionsRaw, exists := existingAssignment["submissions"]
+	if !exists {
+		c.JSON(http.StatusOK, gin.H{"message": "Not Submitted"})
+		return
+	}
+
+	submissions, ok := submissionsRaw.(primitive.A) // preferred over []interface{}
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Invalid submissions format",
+			"debug": fmt.Sprintf("%T", submissionsRaw), // Add debug type info
+		})
+		return
+	}
+
+	for _, s := range submissions {
+		sub, ok := s.(primitive.M) // safer than bson.M here
+		if !ok {
+			continue
+		}
+
+		if sub["student"] == studentName {
+			c.JSON(http.StatusOK, gin.H{
+				"message":  "Submitted",
+				"grade":    sub["grade"],
+				"feedback": sub["feedback"],
+			})
 			return
 		}
 	}
 
-	// ✅ If not found, respond with "Not Submitted"
+	// No match
 	c.JSON(http.StatusOK, gin.H{"message": "Not Submitted"})
 }
 
@@ -1269,42 +1225,7 @@ func gradeAssignment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Grade submitted successfully"})
 }
 
-// 📌 **Student: View Assignments (with attachments)**
-// func getStudentAssignments(c *gin.Context) {
-// 	courseName := c.Param("course")
 
-// 	// ✅ Fetch assignments from MongoDB
-// 	cursor, err := assignmentsCollection.Find(context.TODO(), bson.M{"course": courseName})
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch assignments"})
-// 		return
-// 	}
-// 	defer cursor.Close(context.TODO())
-
-// 	var assignments []Assignment
-// 	for cursor.Next(context.TODO()) {
-// 		var assignment Assignment
-// 		if err := cursor.Decode(&assignment); err != nil {
-// 			continue
-// 		}
-
-// 		// ✅ Check if the assignment has a PDF file
-// 		assignmentPath := filepath.Join("uploads", "courses", courseName, "assignments", assignment.AssignmentName, "assignment.pdf")
-// 		if _, err := os.Stat(assignmentPath); err == nil {
-// 			assignment.PDFPath = assignmentPath // PDF exists, add to response
-// 		}
-
-// 		assignments = append(assignments, assignment)
-// 	}
-
-// 	if err := cursor.Err(); err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing assignments"})
-// 		return
-// 	}
-
-//		// ✅ Return assignments list (with PDF if available)
-//		c.JSON(http.StatusOK, gin.H{"assignments": assignments})
-//	}
 func getStudentAssignments(c *gin.Context) {
 	courseName := strings.ToLower(c.Param("course")) // Ensure lowercase matching
 
@@ -1352,6 +1273,89 @@ func getStudentAssignments(c *gin.Context) {
 
 	// Return assignments list
 	c.JSON(http.StatusOK, gin.H{"assignments": assignments})
+}
+
+// leaderboard
+func AddPoint(c *gin.Context) {
+	username := c.Param("username")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := leaderboardCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$inc": bson.M{"points": 10}})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add points"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "10 points added"})
+}
+
+func DeletePoint(c *gin.Context) {
+	username := c.Param("username")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := leaderboardCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$inc": bson.M{"points": -10}})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete points"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "10 points deducted"})
+}
+
+func GetLeaderboard(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err := leaderboardCollection.Find(ctx, bson.M{}, options.Find().SetSort(bson.M{"points": -1}))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve leaderboard"})
+		return
+	}
+
+	var leaderboard []bson.M
+	if err = cursor.All(ctx, &leaderboard); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse leaderboard data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, leaderboard)
+}
+
+func SearchStudent(c *gin.Context) {
+	username := c.Param("username")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var student bson.M
+	err := leaderboardCollection.FindOne(ctx, bson.M{"username": username}).Decode(&student)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Student not found in leaderboard"})
+		return
+	}
+
+	c.JSON(http.StatusOK, student)
+}
+
+func GetStudentLeaderboard(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Fetch leaderboard sorted by points in descending order
+	cursor, err := leaderboardCollection.Find(ctx, bson.M{}, options.Find().SetSort(bson.M{"points": -1}))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve leaderboard"})
+		return
+	}
+
+	var leaderboard []bson.M
+	if err = cursor.All(ctx, &leaderboard); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse leaderboard data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, leaderboard)
 }
 
 func main() {
@@ -1403,6 +1407,11 @@ func main() {
 	admin.GET("/courses/:course/assignments/:assignment/submissions", getSubmissions)
 	admin.POST("/courses/:course/assignments/:assignment/students/:student/grade", gradeAssignment)
 
+	admin.POST("/leaderboard/addpoint/:username", AddPoint)
+	admin.POST("/leaderboard/deletepoint/:username", DeletePoint)
+	admin.GET("/leaderboard", GetLeaderboard)
+	admin.GET("/leaderboard/search/:username", SearchStudent)
+
 	// Student routes
 	router.GET("/courses", getCourses)
 	router.GET("/course/:course/resources", getCourseResources)
@@ -1412,9 +1421,9 @@ func main() {
 	router.POST("/students/:student/courses/:course/assignments/:assignment/upload", uploadAssignment)
 	router.POST("/students/:student/courses/:course/assignments/:assignment/checksubmission", checkAssignmentSubmission)
 	router.GET("/students/courses/:course/assignments", getStudentAssignments) // **View Assignments**
+	router.GET("/leaderboard", GetStudentLeaderboard)
 
 	fmt.Println("Server running on port 8000")
 	router.Run(":8000")
 
 }
-
