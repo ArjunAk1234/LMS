@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -84,6 +85,8 @@ var detailsCollection *mongo.Collection
 var coursesCollection *mongo.Collection
 var assignmentsCollection *mongo.Collection
 var leaderboardCollection *mongo.Collection
+var quizCollection *mongo.Collection
+var submissionCollection *mongo.Collection
 
 // Initialize MongoDB connection
 func init() {
@@ -102,6 +105,9 @@ func init() {
 	coursesCollection = client.Database("User2").Collection("courses")
 	assignmentsCollection = client.Database("User2").Collection("assignments")
 	leaderboardCollection = client.Database("User2").Collection("leaderboard")
+	quizCollection = client.Database("User2").Collection("quiz")
+	submissionCollection = client.Database("User2").Collection("submissions")
+
 	// Ensure base upload directory exists
 	os.MkdirAll("uploads", os.ModePerm)
 }
@@ -339,7 +345,7 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success":true})
+	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully!"})
 	leaderboardEntry := bson.M{"username": input.Username, "points": 0}
 	_, err = leaderboardCollection.InsertOne(ctx, leaderboardEntry)
 	if err != nil {
@@ -784,7 +790,6 @@ func uploadResource(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Resource uploaded successfully", "file": fileName})
 }
 
-
 func uploadTextNote(c *gin.Context) {
 	courseName := c.Param("course")
 
@@ -840,7 +845,6 @@ func uploadTextNote(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Note added successfully", "note": note.Name + ".txt"})
 }
-
 
 func downloadNotes(c *gin.Context) {
 	courseName := c.Param("course")
@@ -1120,7 +1124,6 @@ func uploadAssignment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Assignment submitted successfully", "file": handler.Filename})
 }
 
-
 func checkAssignmentSubmission(c *gin.Context) {
 	studentName := c.Param("student")
 	courseName := c.Param("course")
@@ -1224,7 +1227,6 @@ func gradeAssignment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Grade submitted successfully"})
 }
-
 
 func getStudentAssignments(c *gin.Context) {
 	courseName := strings.ToLower(c.Param("course")) // Ensure lowercase matching
@@ -1358,6 +1360,493 @@ func GetStudentLeaderboard(c *gin.Context) {
 	c.JSON(http.StatusOK, leaderboard)
 }
 
+//quizzz
+
+// MongoDB collections
+
+// Quiz model
+type Quiz struct {
+	ID        string     `json:"id" bson:"id"`
+	Title     string     `json:"title" bson:"title"`
+	Questions []Question `json:"questions" bson:"questions"`
+	StartTime time.Time  `json:"startTime" bson:"startTime"`
+	EndTime   time.Time  `json:"endTime" bson:"endTime"`
+}
+
+type Question struct {
+	Question string   `json:"question"`
+	Options  []string `json:"options"`
+	Answer   string   `json:"answer"` // should be actual answer, not index
+}
+
+type QuizInput struct {
+	Title     string     `json:"title"`
+	Questions []Question `json:"questions"`
+	StartTime string     `json:"startTime"`
+	EndTime   string     `json:"endTime"`
+}
+
+type Submission struct {
+	QuizID      string         `json:"quizId" bson:"quizId"`
+	StudentID   string         `json:"studentId" bson:"studentId"`
+	Studenname  string         `json:"studentname" bson:"studentname"`
+	Answers     map[string]int `json:"answers" bson:"answers"`
+	Score       int            `json:"score,omitempty" bson:"score"`
+	SubmittedAt time.Time      `json:"submitted_at,omitempty" bson:"submitted_at,omitempty"`
+}
+
+func createQuiz(c *gin.Context) {
+	var input QuizInput
+	if err := c.BindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	// Parse start and end time from string to time.Time
+	startTime, err1 := time.Parse(time.RFC3339, input.StartTime)
+	endTime, err2 := time.Parse(time.RFC3339, input.EndTime)
+	if err1 != nil || err2 != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start or end time format"})
+		return
+	}
+
+	quiz := Quiz{
+		ID:        input.Title, // Set ID same as title
+		Title:     input.Title,
+		Questions: input.Questions,
+		StartTime: startTime,
+		EndTime:   endTime,
+	}
+
+	_, err := quizCollection.InsertOne(context.TODO(), quiz)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create quiz"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Quiz created successfully"})
+}
+
+func getAllquizSubmissions(c *gin.Context) {
+	cursor, err := submissionCollection.Find(context.TODO(), bson.M{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get submissions"})
+		return
+	}
+
+	var submissionDocs []struct {
+		QuizID      string       `bson:"quizId"`
+		Submissions []Submission `bson:"submissions"`
+	}
+
+	if err := cursor.All(context.TODO(), &submissionDocs); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse submissions"})
+		return
+	}
+
+	c.JSON(http.StatusOK, submissionDocs)
+}
+
+func getQuizSubmissionsByID(c *gin.Context) {
+	quizID := c.Param("quizid")
+	if quizID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "QuizID is required"})
+		return
+	}
+
+	// Fetch the document for the specific quiz
+	var submissionDoc struct {
+		QuizID      string       `bson:"quizId"`
+		Submissions []Submission `bson:"submissions"`
+	}
+
+	err := submissionCollection.FindOne(context.TODO(), bson.M{"quizId": quizID}).Decode(&submissionDoc)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No submissions found for this quiz"})
+		return
+	}
+
+	// c.JSON(http.StatusOK, submissionDoc)
+	c.JSON(http.StatusOK, gin.H{
+		"quizId":      submissionDoc.QuizID,
+		"submissions": submissionDoc.Submissions,
+	})
+}
+
+func getStudentProgress(c *gin.Context) {
+	email := c.Param("email")
+	if email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
+		return
+	}
+
+	// Fetch all quizzes
+	cursor, err := quizCollection.Find(context.TODO(), bson.M{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch quizzes"})
+		return
+	}
+	var quizzes []Quiz
+	if err := cursor.All(context.TODO(), &quizzes); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse quizzes"})
+		return
+	}
+
+	// Prepare results
+	var progress []gin.H
+
+	for _, quiz := range quizzes {
+		var submissionRecord struct {
+			QuizID      string       `bson:"quizId"`
+			Submissions []Submission `bson:"submissions"`
+		}
+
+		err := submissionCollection.FindOne(context.TODO(), bson.M{"quizId": quiz.ID}).Decode(&submissionRecord)
+		if err != nil {
+			// No submissions for this quiz at all
+			progress = append(progress, gin.H{
+				"quizId":      quiz.ID,
+				"title":       quiz.Title,
+				"status":      "missed",
+				"score":       0,
+				"submittedAt": nil,
+			})
+			continue
+		}
+
+		// Check if this student has submitted
+		found := false
+		for _, sub := range submissionRecord.Submissions {
+			if sub.StudentID == email {
+				progress = append(progress, gin.H{
+					"quizId":      quiz.ID,
+					"title":       quiz.Title,
+					"status":      "submitted",
+					"score":       sub.Score,
+					"submittedAt": sub.SubmittedAt,
+				})
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			progress = append(progress, gin.H{
+				"quizId":      quiz.ID,
+				"title":       quiz.Title,
+				"status":      "missed",
+				"score":       0,
+				"submittedAt": nil,
+			})
+		}
+	}
+
+	c.JSON(http.StatusOK, progress)
+}
+
+func getActiveQuizzes(c *gin.Context) {
+	now := time.Now()
+	log.Println("Current time:", now)
+
+	filter := bson.M{
+		"startTime": bson.M{"$lte": now},
+		"endTime":   bson.M{"$gte": now},
+	}
+
+	cursor, err := quizCollection.Find(context.TODO(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get quizzes"})
+		return
+	}
+
+	var quizzes []Quiz
+	if err := cursor.All(context.TODO(), &quizzes); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse quizzes"})
+		return
+	}
+
+	c.JSON(http.StatusOK, quizzes)
+}
+
+func submitQuiz(c *gin.Context) {
+	var submission Submission
+	if err := c.BindJSON(&submission); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid submission format"})
+		print("sdfsfdfsfdfsfsfdfsffd")
+		return
+	}
+
+	var user struct {
+		Email    string `bson:"email"`
+		Username string `bson:"username"`
+		Role     string `bson:"role"`
+	}
+
+	err := userCollection.FindOne(context.TODO(), bson.M{"email": submission.StudentID}).Decode(&user)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Student not found"})
+		return
+	}
+
+	// Optional: Ensure only students can submit (skip if not needed)
+	if user.Role == "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Admins cannot submit quizzes"})
+		return
+	}
+
+	// Add username as studentname in submission
+	submission.Studenname = user.Username
+
+	// Fetch quiz to calculate score
+	var quiz Quiz
+	err = quizCollection.FindOne(context.TODO(), bson.M{"id": submission.QuizID}).Decode(&quiz)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Quiz not found"})
+		print("sdfsfdfsfdfsfsfdfsasdadadadasdsadasdsssssssssffd")
+		return
+	}
+
+	// Check if submission already exists in submissions collection
+	var existingSubmissions struct {
+		QuizID      string       `bson:"quizId"`
+		Submissions []Submission `bson:"submissions"`
+	}
+
+	err = submissionCollection.FindOne(context.TODO(), bson.M{"quizId": submission.QuizID}).Decode(&existingSubmissions)
+	if err == nil {
+		for _, sub := range existingSubmissions.Submissions {
+			if sub.StudentID == submission.StudentID {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "You have already submitted this quiz"})
+				return
+			}
+		}
+	}
+
+	// Calculate score
+	score := 0
+	for idx, q := range quiz.Questions {
+		key := fmt.Sprintf("q%d", idx)
+		selectedOptionIndex := submission.Answers[key]
+		if selectedOptionIndex >= 0 && selectedOptionIndex < len(q.Options) {
+			selectedAnswer := q.Options[selectedOptionIndex]
+			if selectedAnswer == q.Answer {
+				score++
+			}
+		}
+	}
+
+	// Prepare submission with score and timestamp
+	submission.Score = score
+	submission.SubmittedAt = time.Now()
+
+	// Push into submission collection grouped by quizId
+	filter := bson.M{"quizId": submission.QuizID}
+	update := bson.M{
+		"$push": bson.M{
+			"submissions": submission,
+		},
+	}
+	opts := options.Update().SetUpsert(true)
+
+	_, err = submissionCollection.UpdateOne(context.TODO(), filter, update, opts)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save submission"})
+		print("sdfsfdfsfdfsfsfdfsffd23232423")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Quiz submitted successfully",
+		"score":   score,
+	})
+}
+
+func getStudentResults(c *gin.Context) {
+	email := c.Param("email")
+	quizID := c.Param("quizid")
+
+	if email == "" || quizID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and QuizID are required"})
+		return
+	}
+
+	// Fetch only the submission document for the specific quiz
+	var submissionDoc struct {
+		quizId      string       `bson:"quizId"`
+		Submissions []Submission `bson:"submissions"`
+	}
+
+	err := submissionCollection.FindOne(context.TODO(), bson.M{"quizId": quizID}).Decode(&submissionDoc)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Quiz submissions not found"})
+		return
+	}
+
+	// Find the submission for the specific student
+	var targetSubmission *Submission
+	for _, sub := range submissionDoc.Submissions {
+		if sub.StudentID == email {
+			targetSubmission = &sub
+			break
+		}
+	}
+
+	if targetSubmission == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "No submission found for this student", "submitted": false})
+		return
+	}
+
+	// Fetch quiz details
+	var quiz Quiz
+	err = quizCollection.FindOne(context.TODO(), bson.M{"id": quizID}).Decode(&quiz)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load quiz data"})
+		return
+	}
+
+	// Prepare result
+	questionsWithAnswers := []gin.H{}
+	for idx, q := range quiz.Questions {
+		key := fmt.Sprintf("q%d", idx)
+		userAnswerIdx, ok := targetSubmission.Answers[key]
+
+		selectedOption := ""
+		isCorrect := false
+
+		if ok && userAnswerIdx >= 0 && userAnswerIdx < len(q.Options) {
+			selectedOption = q.Options[userAnswerIdx]
+			isCorrect = selectedOption == q.Answer
+		}
+
+		questionsWithAnswers = append(questionsWithAnswers, gin.H{
+			"question":      q.Question,
+			"userAnswer":    selectedOption,
+			"correctAnswer": q.Answer,
+			"isCorrect":     isCorrect,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"quizId":        quizID,
+		"score":         targetSubmission.Score,
+		"submittedtime": targetSubmission.SubmittedAt,
+		"answers":       questionsWithAnswers,
+		"submitted":     true,
+	})
+}
+
+func hasSubmitted(c *gin.Context) {
+	quizID := c.Param("quizID")
+	studentID := c.Param("studentID")
+
+	// Look for the quiz submission document
+	var result struct {
+		QuizID      string       `bson:"quizId"`
+		Submissions []Submission `bson:"submissions"`
+	}
+
+	err := submissionCollection.FindOne(context.TODO(), bson.M{"quizId": quizID}).Decode(&result)
+	if err != nil {
+		// No submission found for this quiz at all
+		c.JSON(http.StatusOK, gin.H{"submitted": false})
+		return
+	}
+
+	for _, sub := range result.Submissions {
+		if sub.StudentID == studentID {
+			c.JSON(http.StatusOK, gin.H{"submitted": true})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"submitted": false})
+}
+func getusername1(c *gin.Context) {
+
+	email := c.Param("email")
+	if email == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"Username": "nil", "error": "Unauthorized: Invalid token data"})
+		return
+	}
+	// Check if the user exists in the database
+	var user User
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := userCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"Username": "nil", "error": "Unauthorized: User not found"})
+		return
+	}
+	// Return success response
+	c.JSON(http.StatusOK, gin.H{"username": user.Username})
+}
+func getQuizLeaderboard(c *gin.Context) {
+	quizID := c.Param("quizid")
+	if quizID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "QuizID is required"})
+		return
+	}
+
+	// Fetch submission document for this quiz
+	var submissionDoc struct {
+		QuizID      string       `bson:"quizId"`
+		Submissions []Submission `bson:"submissions"`
+	}
+
+	err := submissionCollection.FindOne(context.TODO(), bson.M{"quizId": quizID}).Decode(&submissionDoc)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No submissions found for this quiz"})
+		return
+	}
+
+	// Sort submissions by score in descending order
+	sort.Slice(submissionDoc.Submissions, func(i, j int) bool {
+		return submissionDoc.Submissions[i].Score > submissionDoc.Submissions[j].Score
+	})
+
+	// Build leaderboard with usernames
+	leaderboard := []gin.H{}
+	for idx, sub := range submissionDoc.Submissions {
+		// Fetch the username for this email
+		var user struct {
+			Username string `bson:"username"`
+		}
+		err := userCollection.FindOne(context.TODO(), bson.M{"email": sub.StudentID}).Decode(&user)
+		username := sub.StudentID // fallback
+		if err == nil {
+			username = user.Username
+		}
+
+		leaderboard = append(leaderboard, gin.H{
+			"rank":        idx + 1,
+			"username":    username,
+			"email":       sub.StudentID,
+			"score":       sub.Score,
+			"submittedAt": sub.SubmittedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, leaderboard)
+}
+
+func getAllQuizzes(c *gin.Context) {
+	cursor, err := quizCollection.Find(context.TODO(), bson.M{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch quizzes"})
+		return
+	}
+
+	// var quizzes []Quiz
+	quizzes := []Quiz{}
+	if err := cursor.All(context.TODO(), &quizzes); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse quizzes"})
+		return
+	}
+
+	c.JSON(http.StatusOK, quizzes)
+
+}
+
 func main() {
 	router := gin.Default()
 	// router.Use(func(c *gin.Context) {
@@ -1397,6 +1886,7 @@ func main() {
 	router.POST("/logout", Logout)
 	router.GET("/userm", userm)
 	router.GET("/username", getusername)
+	router.GET("/username/email/:email", getusername1)
 
 	admin := router.Group("/admin")
 	admin.POST("/course", createCourse)
@@ -1412,6 +1902,13 @@ func main() {
 	admin.GET("/leaderboard", GetLeaderboard)
 	admin.GET("/leaderboard/search/:username", SearchStudent)
 
+	admin.POST("/create-quiz", createQuiz)
+	admin.GET("/submissions", getAllquizSubmissions)
+	admin.GET("/student-progress/email/:email", getStudentProgress)
+	router.GET("/leaderboard/:quizid", getQuizLeaderboard)
+	admin.GET("/submissions/quiz/:quizid", getQuizSubmissionsByID)
+	admin.GET("/quizzes", getAllQuizzes)
+
 	// Student routes
 	router.GET("/courses", getCourses)
 	router.GET("/course/:course/resources", getCourseResources)
@@ -1422,6 +1919,11 @@ func main() {
 	router.POST("/students/:student/courses/:course/assignments/:assignment/checksubmission", checkAssignmentSubmission)
 	router.GET("/students/courses/:course/assignments", getStudentAssignments) // **View Assignments**
 	router.GET("/leaderboard", GetStudentLeaderboard)
+
+	router.GET("/active-quizzes", getActiveQuizzes)
+	router.POST("/submit-quiz", submitQuiz)
+	router.GET("/results/email/:email/quizid/:quizid", getStudentResults)
+	router.GET("/checkquizSubmission/:quizID/:studentID", hasSubmitted)
 
 	fmt.Println("Server running on port 8000")
 	router.Run(":8000")
