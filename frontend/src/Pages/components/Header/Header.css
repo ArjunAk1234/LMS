@@ -1,66 +1,4 @@
-/* .header-container {
-    background-color: rgba(57, 68, 107, 1);
-  }
-  header .logo {
-    text-decoration: none;
-  }
-  header .row {
-    margin: 0px !important;
-  }
-  header {
-    width: 100%;
-    height: 70px;
-    background: white; 
-    position: fixed;
-    top:0px;
-    left: 0px;
-  }
-  header .logo img {
-    width: 70px;
-  }
-  header button.rounded-circle {
-    min-width: 40px !important;
-    width: 40px !important;
-    height: 40px !important;
-    background: #f0f5ff;
-    color: #292929;
-    font-size:00px !important;
-  }
-  .myAcc .userImg .rounded-circle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background-color: #ff7300;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-  }
-  
-  .myAcc .userImg .rounded-circle svg {
-    width: 100%;
-    height: 100%;
-    color: #000000;
-    transition: color 0.3s ease;
-  }
-  
-  .myAcc .userImg .rounded-circle:hover {
-    transform: translateY(-4px); 
-    box-shadow: 0 0 12px rgba(255, 115, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3); 
-  }
-  
-  .myAcc .userImg .rounded-circle:hover svg {
-    color: #ffffff;
-  }
-  header button.rounded-circle {
-  width: 48px !important;
-  height: 48px !important;
-}
-  
-  
-   */
 
-/* Common variables to match login page */
 :root {
   --primary-color: #e48110;
   --primary-light: rgb(255, 180, 18);
@@ -103,16 +41,6 @@ html {
 
 body {
   overflow-x: hidden;
-}
-
-body.dashboard-body {
-  background-color: var(--bg-light);
-  background-image: 
-    linear-gradient(120deg, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-    radial-gradient(circle at top right, rgba(74, 124, 165, 0.1), transparent 60%),
-    radial-gradient(circle at bottom left, rgba(228, 129, 16, 0.1), transparent 60%);
-  background-attachment: fixed;
-  background-size: cover;
 }
 
 header {
