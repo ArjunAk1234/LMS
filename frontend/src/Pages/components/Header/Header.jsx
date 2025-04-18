@@ -54,8 +54,14 @@ const Header = () => {
     <header className="header-container d-flex align-items-center">
       <div className="container-fluid w-100">
         <div className="d-flex align-items-center px-3">
-          {/* Button now comes first */}
-          <div className="col-xs-3 d-flex align-items-center part2 pl-4">
+          
+          {/* Logo */}
+          <div className="col-sm-3 part1">
+            <Link to="/dashboard" className="d-flex align-items-center logo">
+              <img src="/acm.png" alt="Logo" />
+            </Link>
+          </div>
+          <div className="toggle col-xs-3 d-flex align-items-center part2 pl-4">
             <Button
               className="rounded-circle mr-3"
               onClick={() => {
@@ -67,12 +73,6 @@ const Header = () => {
               }
             </Button>
 
-          </div>
-          {/* Logo */}
-          <div className="col-sm-3 part1">
-            <Link to="/dashboard" className="d-flex align-items-center logo">
-              <img src="/acm.png" alt="Logo" />
-            </Link>
           </div>
           <div className="col-sm-7 d-flex align-items-center justify-content-end part3">
             <div className="myAccWrapper">

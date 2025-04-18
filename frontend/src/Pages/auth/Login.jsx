@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BsEnvelope, BsLock, BsEye, BsEyeSlash, BsArrowLeft } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../components/Layout/AuthContext";  // Import useAuth
 import "./Login.css";
 import OtpInput from "./OtpInput";
 
@@ -16,6 +17,8 @@ function LogIn() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+
+  const { checkUserRole } = useAuth();  // Access checkUserRole from AuthContext
 
   function handleUserInput(e) {
     const { name, value } = e.target;
@@ -50,6 +53,9 @@ function LogIn() {
         if (otpRes.data) {
           setShowOtpInput(true);
         }
+
+        // Check the role of the user (after OTP)
+        await checkUserRole(formData.email); // This will set the user state and role
       } else {
         setError("Invalid credentials!");
       }
@@ -59,6 +65,7 @@ function LogIn() {
       setIsLoading(false);
     }
   }
+
   const resendOtp = async () => {
     setIsLoading(true);
     try {
@@ -77,7 +84,7 @@ function LogIn() {
       setIsLoading(false);
     }
   };
-  
+
   const handleBackToLogin = () => {
     setShowOtpInput(false);
   };
@@ -115,7 +122,6 @@ function LogIn() {
           <div className="form-content">
             <div>
               <h1>Log In</h1>
-              <p>Please fill this form to log in</p>
             </div>
             <hr />
 
@@ -185,11 +191,11 @@ function LogIn() {
           <p>We've sent a verification code to <strong>{formData.email}</strong></p>
           
           <OtpInput 
-          length={6} 
-          onOtpSubmit={onOtpSubmit} 
-          email={formData.email}
-          resendOtp={resendOtp} 
-            />
+            length={6} 
+            onOtpSubmit={onOtpSubmit} 
+            email={formData.email}
+            resendOtp={resendOtp} 
+          />
           
           {error && <p className="otp-error">{error}</p>}
         </div>

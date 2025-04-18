@@ -2,8 +2,57 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Enhanced solution for autofill background issues */
+/* Chrome, Safari, Edge */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-light) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  transition: background-color 9999s ease-out !important;
+  background-clip: content-box !important;
+}
 
+/* Firefox */
+@-moz-document url-prefix() {
+  input:-moz-autofill,
+  input:-moz-autofill:focus {
+    background-color: var(--input-bg) !important;
+    color: var(--text-light) !important;
+  }
+}
+
+/* Additional fix for most modern browsers */
+.input-wrapper {
+  /* Add to existing styles */
+  background-color: var(--input-bg) !important;
+}
+
+/* Force background color to remain consistent */
+.input-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--input-bg);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Increase specificity for input styles */
+.input-wrapper input,
+.input-wrapper input:focus {
+  background-color: transparent !important;
+  color: var(--text-light) !important;
+  z-index: 2;
+}
 *{margin:0px; padding:0px;}
 
-body {font-family: "Open Sans", sans-serif !important}
+* {
+  font-family: 'Poppins', 'Open Sans', sans-serif;
+}
 

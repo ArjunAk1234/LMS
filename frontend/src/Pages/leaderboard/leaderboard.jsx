@@ -75,45 +75,6 @@ const Leaderboard = () => {
       <div className="leaderboard-header">
         <h2 className="leaderboard-title">🏆 Leaderboard</h2>
       </div>
-
-      <div className="leaderboard-table-container">
-        <table className="leaderboard-table">
-          <thead className="leaderboard-table-header">
-            <tr>
-              <th className="rank-column">Rank</th>
-              <th className="name-column">Name</th>
-              <th className="points-column">Points</th>
-              {isAdmin && <th className="actions-column">Actions</th>}
-            </tr>
-          </thead>
-          <tbody className="leaderboard-table-body">
-            {Array.isArray(leaderboard) && leaderboard.map((user, index) => (
-              <tr key={user.username} className="leaderboard-row">
-                <td className="rank-cell">{index + 1}</td>
-                <td className="name-cell">{user.username}</td>
-                <td className="points-cell">{user.points}</td>
-                {isAdmin && (
-                  <td className="actions-cell">
-                    <button 
-                      className="points-button add-points"
-                      onClick={() => modifyPoints(user.username, 'add')}
-                    >
-                      ➕
-                    </button>
-                    <button 
-                      className="points-button deduct-points"
-                      onClick={() => modifyPoints(user.username, 'delete')}
-                    >
-                      ➖
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
       {isAdmin && (
         <div className="admin-tools">
           <div className="search-container">
@@ -159,6 +120,43 @@ const Leaderboard = () => {
           )}
         </div>
       )}
+      <div className="leaderboard-table-container">
+        <table className="leaderboard-table">
+          <thead className="leaderboard-table-header">
+            <tr>
+              <th className="rank-column">Rank</th>
+              <th className="name-column">Name</th>
+              <th className="points-column">Points</th>
+              {isAdmin && <th className="actions-column">Actions</th>}
+            </tr>
+          </thead>
+          <tbody className="leaderboard-table-body">
+            {Array.isArray(leaderboard) && leaderboard.map((user, index) => (
+              <tr key={user.username} className="leaderboard-row">
+                <td className="rank-cell">{index + 1}</td>
+                <td className="name-cell">{user.username}</td>
+                <td className="points-cell">{user.points}</td>
+                {isAdmin && (
+                  <td className="actions-cell">
+                    <button 
+                      className="points-button add-points"
+                      onClick={() => modifyPoints(user.username, 'add')}
+                    >
+                      ➕
+                    </button>
+                    <button 
+                      className="points-button deduct-points"
+                      onClick={() => modifyPoints(user.username, 'delete')}
+                    >
+                      ➖
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

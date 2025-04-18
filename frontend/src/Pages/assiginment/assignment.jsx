@@ -17,6 +17,7 @@ const Assignment = () => {
   const [submissionStatuses, setSubmissionStatuses] = useState({});
   const [searchUngraded, setSearchUngraded] = useState({});
   const [searchGraded, setSearchGraded] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("assignment-body");
@@ -74,31 +75,90 @@ const Assignment = () => {
     }
   };
 
+  const deleteAssignment = (courseName, assignmentName) => {
+    // Show confirmation dialog
+    if (!confirm(`Are you sure you want to delete the assignment "${assignmentName}" from course "${courseName}"? This action cannot be undone and will delete all student submissions.`)) {
+      return; // User cancelled the deletion
+    }
+
+    // Call the API to delete the assignment
+    fetch(`http://localhost:8000/admin/course/${courseName}/deleteassignment/${assignmentName}`, {
+      method: 'DELETE',
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to delete assignment');
+        }
+        return response.json();
+      })
+      .then(data => {
+        alert('Assignment deleted successfully');
+        // Remove the assignment from the assignments array
+        setAssignments(assignments.filter(a => a.name !== assignmentName));
+
+        // Clear any related state
+        const newSubmissions = { ...submissions };
+        delete newSubmissions[assignmentName];
+        setSubmissions(newSubmissions);
+
+        const newExpandedAssignments = { ...expandedAssignments };
+        delete newExpandedAssignments[assignmentName];
+        setExpandedAssignments(newExpandedAssignments);
+
+        // Clear any other assignment-specific state
+        const newGradeData = { ...gradeData };
+        delete newGradeData[assignmentName];
+        setGradeData(newGradeData);
+
+        const newSearchGraded = { ...searchGraded };
+        delete newSearchGraded[assignmentName];
+        setSearchGraded(newSearchGraded);
+
+        const newSearchUngraded = { ...searchUngraded };
+        delete newSearchUngraded[assignmentName];
+        setSearchUngraded(newSearchUngraded);
+      })
+      .catch(error => {
+        console.error('Error deleting assignment:', error);
+        alert('Failed to delete the assignment. Please try again.');
+      });
+  };
+
   const selectCourse = async (course) => {
+    // Set loading state to true
+    setIsLoading(true);
+    
+    // Reset all assignment-related states first
+    setAssignments([]);
+    setExpandedAssignments({});
+    setSubmissions({});
+    setGradeData({});
+    setSubmissionStatuses({});
+    setSearchUngraded({});
+    setSearchGraded({});
+    
+    // Then set the selected course
     setSelectedCourse(course);
+
     try {
       const res = await axios.get(`http://localhost:8000/students/courses/${course.name}/assignments`);
-      // Ensure assignments is always an array
-      setAssignments(Array.isArray(res.data.assignments) ? res.data.assignments : []);
-      
-      // If not admin and student name is available, check submission status for all assignments
+      const assignmentsData = Array.isArray(res.data.assignments) ? res.data.assignments : [];
+      setAssignments(assignmentsData);
+
       if (!isAdmin && studentName) {
         const newStatuses = {};
-        const assignmentsData = Array.isArray(res.data.assignments) ? res.data.assignments : [];
         for (const assignment of assignmentsData) {
           const status = await checkSubmissionStatus(course.name, assignment.name);
           newStatuses[assignment.name] = status;
         }
         setSubmissionStatuses(newStatuses);
       }
-      
-      // Reset expanded assignments when selecting a new course
-      setExpandedAssignments({});
-      // Reset submissions
-      setSubmissions({});
     } catch (error) {
       console.error("Error fetching assignments:", error);
       setAssignments([]);
+    } finally {
+      // Set loading state to false when done
+      setIsLoading(false);
     }
   };
 
@@ -155,12 +215,12 @@ const Assignment = () => {
 
       setNewAssignment({ name: "", description: "", due_date: "", pdf: null, courseName: "" });
       setShowCreateAssignment(false);
-      
+
       // If the course with this name is currently selected, refresh assignments
       if (selectedCourse && selectedCourse.name === newAssignment.courseName) {
         selectCourse(selectedCourse);
       }
-      
+
       alert("Assignment created successfully!");
     } catch (error) {
       console.error("Error creating assignment:", error);
@@ -213,21 +273,21 @@ const Assignment = () => {
   const getSubmissions = async (assignment) => {
     try {
       const res = await axios.get(`http://localhost:8000/admin/courses/${selectedCourse.name}/assignments/${assignment.name}/submissions`);
-      
+
       // Store submissions by assignment name
       setSubmissions(prev => ({
         ...prev,
         [assignment.name]: Array.isArray(res.data.submissions) ? res.data.submissions : []
       }));
-      
+
       // Initialize search state for this assignment if it doesn't exist
       if (!searchUngraded[assignment.name]) {
-        setSearchUngraded(prev => ({...prev, [assignment.name]: ""}));
+        setSearchUngraded(prev => ({ ...prev, [assignment.name]: "" }));
       }
       if (!searchGraded[assignment.name]) {
-        setSearchGraded(prev => ({...prev, [assignment.name]: ""}));
+        setSearchGraded(prev => ({ ...prev, [assignment.name]: "" }));
       }
-      
+
       // Toggle expanded state for this assignment
       setExpandedAssignments(prev => ({
         ...prev,
@@ -235,7 +295,7 @@ const Assignment = () => {
       }));
     } catch (error) {
       console.error("Error fetching submissions:", error);
-      setSubmissions(prev => ({...prev, [assignment.name]: []}));
+      setSubmissions(prev => ({ ...prev, [assignment.name]: [] }));
     }
   };
 
@@ -260,18 +320,18 @@ const Assignment = () => {
         { grade: gradeInfo.grade, feedback: gradeInfo.feedback }
       );
       alert("Grade and feedback submitted!");
-      
+
       // Clear the grade data for this student
       setGradeData(prev => {
-        const newData = {...prev};
+        const newData = { ...prev };
         if (newData[assignmentName]) {
-          const assignmentData = {...newData[assignmentName]};
+          const assignmentData = { ...newData[assignmentName] };
           delete assignmentData[studentName];
           newData[assignmentName] = assignmentData;
         }
         return newData;
       });
-      
+
       // Refresh submissions for this assignment
       const res = await axios.get(`http://localhost:8000/admin/courses/${selectedCourse.name}/assignments/${assignmentName}/submissions`);
       setSubmissions(prev => ({
@@ -291,18 +351,18 @@ const Assignment = () => {
         { grade: gradeInfo.grade, feedback: gradeInfo.feedback }
       );
       alert("Grade and feedback updated!");
-      
+
       // Clear the grade data for this student
       setGradeData(prev => {
-        const newData = {...prev};
+        const newData = { ...prev };
         if (newData[assignmentName]) {
-          const assignmentData = {...newData[assignmentName]};
+          const assignmentData = { ...newData[assignmentName] };
           delete assignmentData[studentName];
           newData[assignmentName] = assignmentData;
         }
         return newData;
       });
-      
+
       // Refresh submissions for this assignment
       const res = await axios.get(`http://localhost:8000/admin/courses/${selectedCourse.name}/assignments/${assignmentName}/submissions`);
       setSubmissions(prev => ({
@@ -316,15 +376,15 @@ const Assignment = () => {
 
   const handleSearchChange = (assignmentName, type, value) => {
     if (type === 'ungraded') {
-      setSearchUngraded(prev => ({...prev, [assignmentName]: value}));
+      setSearchUngraded(prev => ({ ...prev, [assignmentName]: value }));
     } else {
-      setSearchGraded(prev => ({...prev, [assignmentName]: value}));
+      setSearchGraded(prev => ({ ...prev, [assignmentName]: value }));
     }
   };
 
   return (
     <div className="assignment-container p-6">
-      <h1 className="text-2xl font-bold mb-4">Assignment Management</h1>
+      <h1 className="text-2xl font-bold mb-4">Assignments</h1>
 
       {isAdmin && (
         <div className="admin-create-assignment-btn">
@@ -337,11 +397,11 @@ const Assignment = () => {
       {showCreateAssignment && (
         <div className="create-assignment-form p-4 border rounded mb-4 bg-gray-50">
           <h2 className="text-lg font-semibold mb-3">Create New Assignment</h2>
-          
+
           {/* Course dropdown */}
           <div className="mb-3">
             <label className="block text-gray-700 mb-1">Select Course:</label>
-            <select 
+            <select
               value={newAssignment.courseName}
               onChange={(e) => setNewAssignment({ ...newAssignment, courseName: e.target.value })}
               className="border p-2 w-full rounded"
@@ -354,7 +414,7 @@ const Assignment = () => {
               ))}
             </select>
           </div>
-          
+
           <div className="mb-3">
             <label className="block text-gray-700 mb-1">Assignment Name:</label>
             <input
@@ -365,7 +425,7 @@ const Assignment = () => {
               className="border p-2 w-full rounded"
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="block text-gray-700 mb-1">Description:</label>
             <textarea
@@ -375,7 +435,7 @@ const Assignment = () => {
               className="border p-2 w-full rounded min-h-[100px]"
             ></textarea>
           </div>
-          
+
           <div className="mb-3">
             <label className="block text-gray-700 mb-1">Due Date:</label>
             <input
@@ -385,7 +445,7 @@ const Assignment = () => {
               className="border p-2 w-full rounded"
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="block text-gray-700 mb-1">Assignment PDF (Optional):</label>
             <input
@@ -394,9 +454,9 @@ const Assignment = () => {
               className="border p-2 w-full rounded"
             />
           </div>
-          
-          <button 
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600" 
+
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
             onClick={createAssignment}
           >
             Add Assignment
@@ -404,16 +464,15 @@ const Assignment = () => {
         </div>
       )}
 
-      <div className="course-list grid grid-cols-3 gap-4">
+      <div className="course-list grid grid-cols-3 gap-x-1 gap-y-12">
         {/* Guarding against courses being null using optional chaining */}
         {courses?.map((course) => (
           <div
             key={course.name}
-            className={`course-card border p-4 cursor-pointer rounded ${
-              selectedCourse && selectedCourse.name === course.name 
-                ? 'bg-blue-100 border-blue-500' 
+            className={`course-card border p-4 cursor-pointer rounded ${selectedCourse && selectedCourse.name === course.name
+                ? 'bg-blue-100 border-blue-500'
                 : 'hover:bg-gray-100'
-            }`}
+              }`}
             onClick={() => selectCourse(course)}
           >
             {course.name}
@@ -421,15 +480,31 @@ const Assignment = () => {
         ))}
       </div>
 
-      {selectedCourse && (
+      {isLoading && (
+        <div className="loading-indicator mt-6 text-center">
+          <p className="text-gray-500">Loading assignments...</p>
+        </div>
+      )}
+
+      {selectedCourse && !isLoading && (
         <div className="selected-course mt-6">
           <div className="assignment-section">
             <h2 className="text-xl font-semibold mb-4">Assignments for {selectedCourse.name}</h2>
             {assignments && assignments.length > 0 ? (
               <ul className="assignment-list">
-                {assignments?.map((assignment) => (
+                {assignments.map((assignment) => (
                   <li key={assignment.name} className="assignment-item border p-4 mb-4 rounded shadow">
-                    <h3 className="font-bold text-lg">{assignment.name}</h3>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-bold text-lg">{assignment.name}</h3>
+                      {isAdmin && (
+                        <button
+                          onClick={() => deleteAssignment(selectedCourse.name, assignment.name)}
+                          className="delete-assignment-btn bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Delete Assignment
+                        </button>
+                      )}
+                    </div>
                     <p>{assignment.description}</p>
                     <p className="text-gray-600">Due Date: {assignment.due_date}</p>
                     <br />
@@ -491,14 +566,14 @@ const Assignment = () => {
                     )}
                     <br />
                     {isAdmin && (
-                      <button 
-                        className="view-submissions-btn bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600" 
+                      <button
+                        className="view-submissions-btn bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600"
                         onClick={() => getSubmissions(assignment)}
                       >
                         {expandedAssignments[assignment.name] ? "Hide Submissions" : "View Submissions"}
                       </button>
                     )}
-                    
+
                     {/* Submissions section for each assignment */}
                     {isAdmin && expandedAssignments[assignment.name] && (
                       <div className="submissions-section mt-4 p-4 bg-gray-50 rounded">
@@ -535,7 +610,7 @@ const Assignment = () => {
                                     (s.Student?.toLowerCase() || "").includes((searchUngraded[assignment.name] || "").toLowerCase())
                                 )
                                 .map((submission, index) => (
-                                  <li key={`${submission.Student}-${index}`} className="submission-item border p-4 mb-2 rounded bg-white shadow-sm">
+                                  <li key={`ungraded-${submission.Student}-${index}`} className="submission-item border p-4 mb-2 rounded bg-white shadow-sm">
                                     <h4 className="student-name font-semibold">{submission.Student}</h4>
                                     {submission.FilePath && (
                                       <a
@@ -561,8 +636,8 @@ const Assignment = () => {
                                         onChange={(e) => handleGradeChange(assignment.name, submission.Student, 'feedback', e.target.value)}
                                         className="feedback-input border p-2 w-full mt-2 rounded"
                                       ></textarea>
-                                      <button 
-                                        className="submit-grade-btn bg-green-500 text-white px-4 py-2 mt-2 rounded hover:bg-green-600" 
+                                      <button
+                                        className="submit-grade-btn bg-green-500 text-white px-4 py-2 mt-2 rounded hover:bg-green-600"
                                         onClick={() => submitGrade(assignment.name, submission.Student)}
                                       >
                                         Submit Grade
@@ -572,8 +647,8 @@ const Assignment = () => {
                                 ))}
                               {(Array.isArray(submissions[assignment.name]) ? submissions[assignment.name] : [])
                                 .filter(s => s.Grade === "not graded" || s.Grade === "Not Graded").length === 0 && (
-                                <p className="text-gray-500 p-2">No ungraded submissions found.</p>
-                              )}
+                                  <p className="text-gray-500 p-2">No ungraded submissions found.</p>
+                                )}
                             </ul>
                           </div>
 
@@ -589,7 +664,7 @@ const Assignment = () => {
                                     (s.Student?.toLowerCase() || "").includes((searchGraded[assignment.name] || "").toLowerCase())
                                 )
                                 .map((submission, index) => (
-                                  <li key={`${submission.Student}-graded-${index}`} className="submission-item border p-4 mb-2 rounded bg-white shadow-sm">
+                                  <li key={`graded-${submission.Student}-${index}`} className="submission-item border p-4 mb-2 rounded bg-white shadow-sm">
                                     <h4 className="student-name font-semibold">{submission.Student}</h4>
                                     <p>
                                       <strong>Grade:</strong> {submission.Grade}
@@ -622,8 +697,8 @@ const Assignment = () => {
                                         onChange={(e) => handleGradeChange(assignment.name, submission.Student, 'feedback', e.target.value)}
                                         className="feedback-input border p-2 w-full mt-2 rounded"
                                       ></textarea>
-                                      <button 
-                                        className="update-grade-btn bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600" 
+                                      <button
+                                        className="update-grade-btn bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600"
                                         onClick={() => updateGrade(assignment.name, submission.Student)}
                                       >
                                         Update Grade
@@ -633,8 +708,8 @@ const Assignment = () => {
                                 ))}
                               {(Array.isArray(submissions[assignment.name]) ? submissions[assignment.name] : [])
                                 .filter(s => s.Grade !== "not graded" && s.Grade !== "Not Graded").length === 0 && (
-                                <p className="text-gray-500 p-2">No graded submissions found.</p>
-                              )}
+                                  <p className="text-gray-500 p-2">No graded submissions found.</p>
+                                )}
                             </ul>
                           </div>
                         </div>

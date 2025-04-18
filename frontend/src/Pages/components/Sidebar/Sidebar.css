@@ -1,8 +1,9 @@
-
 .main {
-    display: flex;
-    padding-top: 70px; /* Same as header height */
-  }
+  display: flex;
+  padding-top: 70px;
+  position: relative;
+}
+
   
   .main .sidebarWrapper {
     width: 0%;
@@ -11,7 +12,7 @@
   }
   
   .main .sidebarWrapper .sidebar {
-    width: 230px;
+    width: 200px;
     height: calc(100vh - 70px);
     position: fixed;
     top: 70px;
