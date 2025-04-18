@@ -1243,7 +1243,8 @@ func getStudentAssignments(c *gin.Context) {
 	}
 
 	// Fetch assignments
-	cursor, err := assignmentsCollection.Find(context.TODO(), bson.M{"coursename": bson.M{"$regex": courseName, "$options": "i"}})
+	cursor, err := assignmentsCollection.Find(context.TODO(), 
+    bson.M{"coursename": bson.M{"$regex": "^" + courseName + "$", "$options": "i"}})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch assignments"})
 		return
@@ -1359,7 +1360,226 @@ func GetStudentLeaderboard(c *gin.Context) {
 
 	c.JSON(http.StatusOK, leaderboard)
 }
+func GetCourseNamesAndCount(c *gin.Context) {
+    fmt.Println("Getting course names and count...")
+    
+    projection := bson.M{"name": 1}
+    cursor, err := coursesCollection.Find(context.TODO(), bson.M{}, options.Find().SetProjection(projection))
+    if err != nil {
+        fmt.Println("Error fetching from DB:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch courses"})
+        return
+    }
 
+    var results []bson.M
+    if err := cursor.All(context.TODO(), &results); err != nil {
+        fmt.Println("Error parsing cursor:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse courses"})
+        return
+    }
+
+    fmt.Println("Query returned", len(results), "documents")
+    
+    // Extract the names
+    names := []string{}
+    for _, result := range results {
+        fmt.Printf("Result document: %+v\n", result)
+        if name, ok := result["name"].(string); ok {
+            names = append(names, name)
+        } else {
+            fmt.Println("Found document without valid name field")
+        }
+    }
+
+    fmt.Println("Returning", len(names), "course names")
+    
+    // Return count and names
+    c.JSON(http.StatusOK, gin.H{
+        "count": len(names),
+        "names": names,
+    })
+}
+
+func GetAssignmentSummary(c *gin.Context) {
+    fmt.Println("Getting assignment summary...")
+    
+    // Optional course name filter from query parameters
+    courseName := c.Query("course")
+    
+    // Build filter based on whether course name is provided
+    filter := bson.M{}
+    if courseName != "" {
+        filter["coursename"] = courseName
+        fmt.Println("Filtering assignments for course:", courseName)
+    }
+    
+    // Project only the fields we need
+    projection := bson.M{"assignmentname": 1, "coursename": 1, "duedate": 1}
+    cursor, err := assignmentsCollection.Find(context.TODO(), filter, options.Find().SetProjection(projection))
+    if err != nil {
+        fmt.Println("Error fetching from DB:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch assignments"})
+        return
+    }
+    
+    var results []bson.M
+    if err := cursor.All(context.TODO(), &results); err != nil {
+        fmt.Println("Error parsing cursor:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse assignments"})
+        return
+    }
+    
+    fmt.Println("Query returned", len(results), "documents")
+    
+    // Extract the assignment data
+    assignments := []map[string]string{}
+    for _, result := range results {
+        fmt.Printf("Result document: %+v\n", result)
+        
+        assignment := map[string]string{}
+        
+        if name, ok := result["assignmentname"].(string); ok {
+            assignment["name"] = name
+        } else {
+            fmt.Println("Found document without valid assignmentname field")
+            continue
+        }
+        
+        if course, ok := result["coursename"].(string); ok {
+            assignment["course"] = course
+        }
+        
+        if dueDate, ok := result["duedate"].(string); ok {
+            assignment["due_date"] = dueDate
+        }
+        
+        assignments = append(assignments, assignment)
+    }
+    
+    fmt.Println("Returning", len(assignments), "assignments")
+    
+    // Return count and assignment summaries
+    c.JSON(http.StatusOK, gin.H{
+        "count": len(assignments),
+        "assignments": assignments,
+    })
+}
+
+func GetCurrentUserStats(c *gin.Context) {
+    // Get the Authorization header
+    authHeader := c.GetHeader("Authorization")
+    if authHeader == "" {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Missing token"})
+        return
+    }
+    
+    // Extract token from "Bearer <token>"
+    authParts := strings.Split(authHeader, " ")
+    if len(authParts) != 2 || authParts[0] != "Bearer" {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid token format"})
+        return
+    }
+    tokenString := authParts[1]
+    
+    // Verify token and extract claims
+    claims, err := VerifyToken(tokenString)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid or expired token"})
+        return
+    }
+    
+    // Extract email from claims
+    email := claims.Email
+    if email == "" {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid token data"})
+        return
+    }
+    
+    // Get user information to find username
+    var user User
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    err = userCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: User not found"})
+        return
+    }
+    
+    username := user.Username
+    
+    // Now find the user in leaderboard collection by username
+    var userStats bson.M
+    err = leaderboardCollection.FindOne(ctx, bson.M{"username": username}).Decode(&userStats)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            // User doesn't exist in leaderboard yet, create entry with 0 points
+            newEntry := bson.M{
+                "username": username,
+                "email":    email,
+                "points":   0,
+            }
+            
+            _, err = leaderboardCollection.InsertOne(ctx, newEntry)
+            if err != nil {
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create leaderboard entry"})
+                return
+            }
+            
+            userStats = newEntry
+        } else {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user stats"})
+            return
+        }
+    }
+
+    // Get total number of users
+    totalUsers, err := leaderboardCollection.CountDocuments(ctx, bson.M{})
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count total users"})
+        return
+    }
+
+    // Calculate user rank using aggregation pipeline
+    pipeline := []bson.M{
+        {"$sort": bson.M{"points": -1}},
+        {"$group": bson.M{
+            "_id": nil,
+            "userRanks": bson.M{"$push": "$username"},
+        }},
+        {"$project": bson.M{
+            "rank": bson.M{"$indexOfArray": bson.A{"$userRanks", username}},
+        }},
+    }
+
+    cursor, err := leaderboardCollection.Aggregate(ctx, pipeline)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to calculate rank"})
+        return
+    }
+
+    var result []bson.M
+    if err = cursor.All(ctx, &result); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process rank data"})
+        return
+    }
+
+    // Calculate rank (add 1 because indexOfArray is 0-indexed)
+    var rank int64 = 1
+    if len(result) > 0 {
+        if rankValue, ok := result[0]["rank"].(int32); ok {
+            rank = int64(rankValue) + 1
+        } else if rankValue, ok := result[0]["rank"].(int64); ok {
+            rank = rankValue + 1
+        }
+    }
+
+    // Return user stats with rank information
+    c.JSON(http.StatusOK, gin.H{
+        "stats":      userStats,
+        "rank":       rank,
+        "totalUsers": totalUsers,
+    })
+}
 //quizzz
 
 // MongoDB collections
@@ -1846,7 +2066,72 @@ func getAllQuizzes(c *gin.Context) {
 	c.JSON(http.StatusOK, quizzes)
 
 }
+func deleteAssignment(c *gin.Context) {
+	courseName := c.Param("course")
+	assignmentName := c.Param("assignment")
 
+	// Delete assignment from DB
+	res, err := assignmentsCollection.DeleteOne(context.TODO(), bson.M{
+		"coursename":     courseName,
+		"assignmentname": assignmentName,
+	})
+	if err != nil || res.DeletedCount == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete assignment or not found"})
+		return
+	}
+
+	// Delete assignment folder
+	assignmentDir := filepath.Join("uploads", "courses", courseName, "assignments", assignmentName)
+	if err := os.RemoveAll(assignmentDir); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete assignment directory"})
+		return
+	}
+
+	// ✅ Remove all student submissions related to this assignment
+	cursor, err := userCollection.Find(context.TODO(), bson.M{}) // You need to have a usersCollection
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find students"})
+		return
+	}
+	defer cursor.Close(context.TODO())
+
+	for cursor.Next(context.TODO()) {
+		var user bson.M
+		if err := cursor.Decode(&user); err == nil {
+			if studentName, ok := user["username"].(string); ok {
+				studentSubmissionDir := filepath.Join("uploads", "students", studentName, courseName, "assignments", assignmentName)
+				os.RemoveAll(studentSubmissionDir)
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Assignment and student submissions deleted successfully"})
+}
+func deleteCourse(c *gin.Context) {
+	courseName := c.Param("name")
+	// Delete course from DB
+	res, err := coursesCollection.DeleteOne(context.TODO(), bson.M{"name": courseName})
+	if err != nil || res.DeletedCount == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete course or course not found"})
+		return
+	}
+
+	// Delete all assignments related to this course
+	_, err = assignmentsCollection.DeleteMany(context.TODO(), bson.M{"coursename": courseName})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete course assignments"})
+		return
+	}
+
+	// Delete course folder
+	courseDir := filepath.Join("uploads", "courses", courseName)
+	if err := os.RemoveAll(courseDir); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete course directory"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Course and its data deleted successfully"})
+}
 func main() {
 	router := gin.Default()
 	// router.Use(func(c *gin.Context) {
@@ -1901,7 +2186,8 @@ func main() {
 	admin.POST("/leaderboard/deletepoint/:username", DeletePoint)
 	admin.GET("/leaderboard", GetLeaderboard)
 	admin.GET("/leaderboard/search/:username", SearchStudent)
-
+	admin.DELETE("/deletecourse/:name", deleteCourse)
+	admin.DELETE("/course/:course/deleteassignment/:assignment", deleteAssignment)
 	admin.POST("/create-quiz", createQuiz)
 	admin.GET("/submissions", getAllquizSubmissions)
 	admin.GET("/student-progress/email/:email", getStudentProgress)
@@ -1925,6 +2211,10 @@ func main() {
 	router.GET("/results/email/:email/quizid/:quizid", getStudentResults)
 	router.GET("/checkquizSubmission/:quizID/:studentID", hasSubmitted)
 
+	router.GET("/courses/summary", GetCourseNamesAndCount)
+	router.GET("/assignments", GetAssignmentSummary)
+	router.GET("/leaderboard/me", AuthMiddleware(), GetCurrentUserStats)
+	
 	fmt.Println("Server running on port 8000")
 	router.Run(":8000")
 
