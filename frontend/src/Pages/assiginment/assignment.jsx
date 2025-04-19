@@ -127,7 +127,7 @@ const Assignment = () => {
   const selectCourse = async (course) => {
     // Set loading state to true
     setIsLoading(true);
-    
+
     // Reset all assignment-related states first
     setAssignments([]);
     setExpandedAssignments({});
@@ -136,7 +136,7 @@ const Assignment = () => {
     setSubmissionStatuses({});
     setSearchUngraded({});
     setSearchGraded({});
-    
+
     // Then set the selected course
     setSelectedCourse(course);
 
@@ -384,6 +384,7 @@ const Assignment = () => {
 
   return (
     <div className="assignment-container p-6">
+
       <h1 className="text-2xl font-bold mb-4">Assignments</h1>
 
       {isAdmin && (
@@ -470,8 +471,8 @@ const Assignment = () => {
           <div
             key={course.name}
             className={`course-card border p-4 cursor-pointer rounded ${selectedCourse && selectedCourse.name === course.name
-                ? 'bg-blue-100 border-blue-500'
-                : 'hover:bg-gray-100'
+              ? 'bg-blue-100 border-blue-500'
+              : 'hover:bg-gray-100'
               }`}
             onClick={() => selectCourse(course)}
           >
@@ -485,7 +486,19 @@ const Assignment = () => {
           <p className="text-gray-500">Loading assignments...</p>
         </div>
       )}
+      {courses.length === 0 && (
+  <div className="empty-courses-message text-center p-10">
+    <img 
+  src="assignment.gif" 
+  alt="No courses available" 
+  className="mx-auto mb-4 w-1/2 h-1/2 object-contain"
+/>
 
+    <p className="no-courses-text text-xl font-bold text-gray-700">
+      No assignments here yet — they'll show up once your courses begin!
+    </p>
+  </div>
+)}
       {selectedCourse && !isLoading && (
         <div className="selected-course mt-6">
           <div className="assignment-section">
@@ -719,7 +732,14 @@ const Assignment = () => {
                 ))}
               </ul>
             ) : (
-              <p className="no-assignments text-gray-500 mt-2">No assignments available for this course.</p>
+              <div className="empty-assignments-message text-center p-10">
+                <p className="no-courses-text text-xl font-bold text-gray-700">
+      No assignments for this course yet!
+    </p>
+
+                <p className="no-assignments-text text-xl font-bold text-gray-700">
+                </p>
+              </div>
             )}
           </div>
         </div>

@@ -93,6 +93,8 @@ function SignUp() {
         if (registerRes.data.success) {
           // Add success animation or notification here
           setTimeout(() => {
+            console.log("Registration success. Redirecting to login...");
+
             navigate("/login"); // Redirect to login after successful registration
           }, 500);
         } else {

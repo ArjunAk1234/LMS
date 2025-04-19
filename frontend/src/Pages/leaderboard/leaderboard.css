@@ -1,22 +1,42 @@
-
 body.leaderboard-body {
   background-color: white;
   background-attachment: fixed;
   background-size: cover;
+  background-image: url('white.png');
+  background-size: 50%;
+  background-position: center;
+  background-repeat: repeat;
+}
+.title-container-leaderboard{
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+
+  border-color: white;
+  border-radius: 8px;      
+  background-color:white;
+  width: fit-content;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;   
+  margin: 1rem auto 2rem auto;
+}
+.title-container-leaderboard h1{
+  margin-top: 1rem;
 }
 .leaderboard-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
   
-  .leaderboard-header {
-    margin-bottom: 2rem;
-    text-align: center;
-  }
-  
-  .leaderboard-title {
+  width: 80vw;
+  padding: 2rem;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.leaderboard-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.leaderboard-title {
   font-size: 2.25rem;
   font-weight: 700;
   margin-bottom: 1.75rem;
@@ -27,33 +47,34 @@ body.leaderboard-body {
   line-height: 1.3;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   display: inline-block;
-  }
-  
-  .leaderboard-title::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -1px;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(to right, var(--primary), var(--primary-light));
-    border-radius: 1px;
-    transform-origin: left center;
-  }
-  
-  .leaderboard-title:hover::before {
-    animation: pulse 2s infinite;
-  }
-  .leaderboard-title:hover::after {
-    width: 100%;
-  }
-  
+}
+
+.leaderboard-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(to right, var(--primary), var(--primary-light));
+  border-radius: 1px;
+  transform-origin: left center;
+}
+
+.leaderboard-title:hover::before {
+  animation: pulse 2s infinite;
+}
+
+.leaderboard-title:hover::after {
+  width: 100%;
+}
+
 .leaderboard-table-container {
   overflow-x: auto;
   margin-bottom: 3rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
   border-radius: 0.5rem;
-  background-color: #1e293b; /* slate-800 */
+  background-color: #1e293b;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
   margin-top: 3rem;
 }
 
@@ -67,8 +88,10 @@ body.leaderboard-body {
 }
 
 .leaderboard-table-header {
-  background-color: #273f64; /* slate-800 */
-  color: #f8fafc; /* dark grey text */
+  background-color: #273f64;
+  /* slate-800 */
+  color: #f8fafc;
+  /* dark grey text */
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -94,219 +117,227 @@ body.leaderboard-body {
 
 .leaderboard-table-body td {
   padding: 1.25rem;
-  color: #4a5568; /* medium grey */
+  color: #4a5568;
+  /* medium grey */
 }
 
 .leaderboard-row:hover {
-  background-color: #edf2f7; /* subtle blue hover */
+  background-color: #edf2f7;
+  /* subtle blue hover */
 }
 
+
+.rank-column,
+.rank-cell {
+  width: 10%;
+  text-align: center;
+}
+
+.name-column,
+.name-cell {
+  width: 50%;
+}
+
+.points-column,
+.points-cell {
+  width: 20%;
+  text-align: center;
+}
+
+.actions-column,
+.actions-cell {
+  width: 20%;
+  text-align: center;
+}
+
+.points-button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  margin: 0 0.25rem;
+}
+
+.add-points {
+  color: #10b981;
+}
+
+.add-points:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.deduct-points {
+  color: #ef4444;
+}
+
+.deduct-points:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Admin Tools */
+.admin-tools {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+}
+
+.search-container {
+  margin-bottom: 1.5rem;
+}
+
+.search-title {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #1f2937;
   
-  .rank-column, .rank-cell {
-    width: 10%;
-    text-align: center;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.search-button {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: var(--shadow);
+}
+
+.search-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.4s ease;
+  z-index: -1;
+}
+
+.search-button:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.search-button:hover::before {
+  left: 100%;
+}
+
+.search-button:active {
+  transform: translateY(1px);
+}
+
+
+/* Student Card */
+.student-card {
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
+}
+
+.student-info {
+  margin-bottom: 1rem;
+}
+
+.student-info p {
+  margin: 0.5rem 0;
+}
+
+.student-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-button.add-points {
+  background-color: #10b981;
+  color: white;
+}
+
+.action-button.add-points:hover {
+  background-color: #059669;
+}
+
+.action-button.deduct-points {
+  background-color: #ef4444;
+  color: white;
+}
+
+.action-button.deduct-points:hover {
+  background-color: #dc2626;
+}
+
+/* Loading State */
+.leaderboard-loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.25rem;
+  color: var(--primary-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .leaderboard-container {
+    padding: 1rem;
   }
-  
-  .name-column, .name-cell {
-    width: 50%;
-  }
-  
-  .points-column, .points-cell {
-    width: 20%;
-    text-align: center;
-  }
-  
-  .actions-column, .actions-cell {
-    width: 20%;
-    text-align: center;
-  }
-  
-  .points-button {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 0.5rem;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    margin: 0 0.25rem;
-  }
-  
-  .add-points {
-    color: #10b981;
-  }
-  
-  .add-points:hover {
-    background-color: rgba(16, 185, 129, 0.1);
-  }
-  
-  .deduct-points {
-    color: #ef4444;
-  }
-  
-  .deduct-points:hover {
-    background-color: rgba(239, 68, 68, 0.1);
-  }
-  
-  /* Admin Tools */
-  .admin-tools {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-  
-  .search-container {
-    margin-bottom: 1.5rem;
-  }
-  
-  .search-title {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    color: #1f2937;
-  }
-  
-  .search-input-group {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  .search-input {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-  }
-  
-  .search-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-  }
-  
-  .search-button {
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: var(--radius);
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-    box-shadow: var(--shadow);
-  }
-  .search-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.2);
-    transition: all 0.4s ease;
-    z-index: -1;
-  }
-  
-  .search-button:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-  }
-  
-  .search-button:hover::before {
-    left: 100%;
-  }
-  
-  .search-button:active {
-    transform: translateY(1px);
-  }
-  
-  
-  /* Student Card */
-  .student-card {
-    padding: 1.5rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    background-color: #f9fafb;
-  }
-  
-  .student-info {
-    margin-bottom: 1rem;
-  }
-  
-  .student-info p {
-    margin: 0.5rem 0;
-  }
-  
+
   .student-actions {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  
-  .action-button {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.5rem;
   }
-  
-  .action-button.add-points {
-    background-color: #10b981;
-    color: white;
+
+  .action-button {
+    width: 100%;
+    justify-content: center;
   }
-  
-  .action-button.add-points:hover {
-    background-color: #059669;
+
+  .search-input-group {
+    flex-direction: column;
   }
-  
-  .action-button.deduct-points {
-    background-color: #ef4444;
-    color: white;
+
+  .search-button {
+    width: 100%;
   }
-  
-  .action-button.deduct-points:hover {
-    background-color: #dc2626;
-  }
-  
-  /* Loading State */
-  .leaderboard-loading {
-    text-align: center;
-    padding: 2rem;
-    font-size: 1.25rem;
-    color: var(--primary-dark);
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .leaderboard-container {
-      padding: 1rem;
-    }
-    
-    .student-actions {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    .action-button {
-      width: 100%;
-      justify-content: center;
-    }
-    
-    .search-input-group {
-      flex-direction: column;
-    }
-    
-    .search-button {
-      width: 100%;
-    }
-  }
+}

@@ -1,7 +1,3 @@
-*::before,
-*::after {
-  box-sizing: border-box;
-}
 
 :root {
   --primary: #4361ee;
@@ -20,29 +16,29 @@
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --radius: 8px;
 }
-
-.main {
-  display: flex;
-  padding-top: 70px;
-  position: relative;
-}
-
 body.course-body {
   background-color: white;
   background-attachment: fixed;
   background-size: cover;
+  background-image: url('white.png');
+  background-size: 50%;
+  background-position: center;
+  background-repeat: repeat;
 }
+
 .course-container {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+
   margin-top: 2rem;
   font-family: 'Poppins', sans-serif;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius);
   padding: 24px;
   transition: var(--transition);
   animation: fadeIn 0.5s ease;
   min-height: 100vh;
   height: auto;
-  width: 100%;
+  width: 80vw;
   box-sizing: border-box;
   overflow-y: visible;
   box-sizing: border-box;
@@ -59,6 +55,7 @@ body.course-body {
   line-height: 1.3;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   display: inline-block;
+  margin-left: 3rem;
 }
 
 .course-container h1::before {
@@ -109,6 +106,8 @@ body.course-body {
   overflow: hidden;
   z-index: 1;
   box-shadow: var(--shadow);
+  margin-left: 3rem;
+
 }
 
 .admin-create-course-btn button::before {
@@ -145,6 +144,7 @@ body.course-body {
   animation: expandDown 0.3s ease-out;
   transform-origin: top center;
   border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-left: 3rem;
 }
 
 .create-course-form input {
@@ -202,6 +202,7 @@ body.course-body {
 }
 
 .course-card {
+  margin-left: 2.5vw;
   position: relative;
   padding: 20px;
   background: white;
@@ -287,6 +288,8 @@ body.course-body {
   border-left: 4px solid var(--primary);
   background-color: rgba(67, 97, 238, 0.05);
   animation: fadeIn 0.5s ease;
+  margin-left: 3rem;
+
 }
 
 .selected-course h2 {
@@ -310,6 +313,7 @@ body.course-body {
   background: linear-gradient(to right, var(--primary), var(--primary-light));
   transform-origin: left;
   transition: transform 0.5s ease;
+  
 }
 
 .selected-course h2:hover::after {
@@ -320,6 +324,7 @@ body.course-body {
 .note-list {
   list-style-type: none;
   padding: 0;
+  
 }
 
 .resource-list li,

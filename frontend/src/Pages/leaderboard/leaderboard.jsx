@@ -73,7 +73,9 @@ const Leaderboard = () => {
   return (
     <div className="leaderboard-container">
       <div className="leaderboard-header">
-        <h2 className="leaderboard-title">🏆 Leaderboard</h2>
+        <div className='title-container-leaderboard'>
+        <h1 className="leaderboard-title">🏆 Leaderboard</h1>
+        </div>
       </div>
       {isAdmin && (
         <div className="admin-tools">

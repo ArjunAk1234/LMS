@@ -1,14 +1,25 @@
+body.admin-body {
+  background-color: white;
+  background-attachment: fixed;
+  background-size: cover;
+  background-image: url('white.png');
+  background-size: 50%; 
+  background-position: center;
+  background-repeat: repeat;         
+
+}
 .admin-container {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
   margin-top: 2rem;
   font-family: 'Poppins', sans-serif;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius);
   padding: 24px;
   transition: var(--transition);
   animation: fadeIn 0.5s ease;
   min-height: 100vh;
   height: auto;
-  width: 100%;
+  width: 80vw;
   box-sizing: border-box;
   overflow-y: visible;
   box-sizing: border-box;

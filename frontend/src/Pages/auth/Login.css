@@ -544,7 +544,6 @@ body {
   font-size: clamp(var(--font-size-base), 3vw, var(--font-size-md));
   color: var(--text-light);
   text-align: center;
-  margin-top: 2rem;
   width: 100%;
 }
 
@@ -577,6 +576,7 @@ body {
   transform: scaleX(1);
   transform-origin: bottom left;
 }
+
 
 /* Social media icons (optional) */
 .social-icons {

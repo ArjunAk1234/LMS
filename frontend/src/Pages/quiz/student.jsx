@@ -17,16 +17,37 @@ function StudentDashboard() {
   const [submittedQuizIds, setSubmittedQuizIds] = useState(new Set());
 
   useEffect(() => {
-    const userEmail = localStorage.getItem('email') || '';
-    setStudentEmail(userEmail);
-    
-    // Fetch username based on email
-    fetchUsername(userEmail);
-    // Fetch quizzes
-    fetchActiveQuizzes();
-    fetchStudentProgress(userEmail);
-  }, [refreshKey]);
+    document.body.classList.add("student-body");
+    return () => {
+      document.body.classList.remove("student-body");
+    };
+  }, []);
   
+  useEffect(() => {
+    // Get email from localStorage
+    const userEmail = localStorage.getItem('email') || '';
+    
+    // Only proceed if we have an email
+    if (userEmail && userEmail.trim() !== '') {
+      setStudentEmail(userEmail);
+      
+      // Fetch username based on email
+      fetchUsername(userEmail);
+      
+      // Fetch quizzes
+      fetchActiveQuizzes();
+      
+      // Fetch student progress with a slight delay to ensure other operations complete first
+      setTimeout(() => {
+        fetchStudentProgress(userEmail);
+      }, 100);
+    } else {
+      console.warn("No user email found in localStorage");
+      // Still fetch active quizzes even without email
+      fetchActiveQuizzes();
+    }
+  }, [refreshKey]);
+
   const fetchUsername = async (email) => {
     try {
       const response = await axios.get(`http://localhost:8000/username/email/${email}`);
@@ -57,18 +78,72 @@ function StudentDashboard() {
   const fetchStudentProgress = async (email) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:8000/admin/student-progress/email/${email}`);
-      setPastQuizzes(response.data);
+      // First, check if email exists before making the API call
+      if (!email || email.trim() === '') {
+        console.log("No email found for student progress fetch");
+        setPastQuizzes([]);
+        setLoading(false);
+        return;
+      }
+  
+      // Add some logging to help debug
+      console.log("Fetching student progress for email:", email);
       
-      // Add this line to track submitted quiz IDs
-      const submitted = new Set(response.data
-        .filter(quiz => quiz.status === 'submitted')
-        .map(quiz => quiz.id || quiz.quizId));
-      setSubmittedQuizIds(submitted);
+      // Make the API call with error handling
+      const response = await axios.get(`http://localhost:8000/admin/student-progress/email/${email}`, {
+        // Add timeout to prevent hanging requests
+        timeout: 5000,
+        // Add headers if needed for authentication
+        headers: {
+          'Content-Type': 'application/json',
+          // Add auth token if you have one stored
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+        }
+      });
+      
+      console.log("Student progress response:", response.data);
+      
+      // Check if response data is valid
+      if (Array.isArray(response.data)) {
+        setPastQuizzes(response.data);
+        
+        // Add this line to track submitted quiz IDs
+        const submitted = new Set(response.data
+          .filter(quiz => quiz.status === 'submitted')
+          .map(quiz => quiz.id || quiz.quizId));
+        setSubmittedQuizIds(submitted);
+      } else {
+        // Handle case where response is not an array
+        console.warn("Expected array but got:", typeof response.data);
+        setPastQuizzes([]);
+      }
       
       setLoading(false);
+      setError(null); // Clear any previous errors
     } catch (err) {
-      setError('Failed to fetch quiz history');
+      console.error("Error fetching student progress:", err);
+      
+      // More specific error handling
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Error response data:", err.response.data);
+        console.error("Error response status:", err.response.status);
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error("No response received:", err.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Request setup error:", err.message);
+      }
+      
+      // Don't show error if it's just that the user hasn't taken any quizzes
+      if (err.response && err.response.status === 404) {
+        setPastQuizzes([]);
+        setError(null); // No need to show error for 404
+      } else {
+        setError('Unable to load quiz history. Please try again later.');
+      }
       setLoading(false);
     }
   };
@@ -100,10 +175,10 @@ function StudentDashboard() {
   const handleViewChange = (newView, quiz = null) => {
     setView(newView);
     setError(null);
-    
+
     if (quiz) {
       setSelectedQuiz(quiz);
-      
+
       if (newView === 'results') {
         fetchQuizResults(quiz.quizId || quiz.id);
       } else if (newView === 'leaderboard') {
@@ -115,7 +190,7 @@ function StudentDashboard() {
           setView('quizList');
           return;
         }
-        
+
         // Check if already submitted
         checkSubmissionStatus(quiz.id);
       }
@@ -148,47 +223,128 @@ function StudentDashboard() {
       <div className="active-quizzes">
         <h1>Active Quizzes</h1>
         {!Array.isArray(activeQuizzes) || activeQuizzes.length === 0 ? (
-          <p>No active quizzes available right now</p>
+          <div className="empty-quizzes-message text-center p-10">
+            <img 
+  src="course.png" 
+  alt="No courses available" 
+  className="mx-auto mb-4 w-1/2 h-1/2 object-contain"
+/>
+
+            <p className="no-quizzes-text text-xl font-bold text-gray-700">
+              No active quizzes available right now
+            </p>
+          </div>
         ) : (
           <div className="quiz-grid">
-{activeQuizzes.map(quiz => {
-  const expired = isQuizExpired(quiz);
-  return (
-    <div key={quiz.id} className="quiz-card">
-      <h3>{quiz.title}</h3>
-      <p>Questions: {quiz.questions?.length || 0}</p>
-      <p>Ends: {new Date(quiz.endTime).toLocaleString()}</p>
-      {expired ? (
-        <button disabled className="expired-button">
-          Expired
-        </button>
-      ) : submittedQuizIds.has(quiz.id) ? (
-        <button onClick={() => handleViewChange('results', quiz)}>
-          Show Results
-        </button>
-      ) : (
-        <button onClick={() => handleViewChange('takeQuiz', quiz)}>
-          Start Quiz
-        </button>
-      )}
-    </div>
-  );
-})}
+            {activeQuizzes.map(quiz => {
+              const expired = isQuizExpired(quiz);
+              return (
+                <div key={quiz.id} className="quiz-card">
+                  <h3>{quiz.title}</h3>
+                  <p>Questions: {quiz.questions?.length || 0}</p>
+                  <p>Ends: {new Date(quiz.endTime).toLocaleString()}</p>
+                  {expired ? (
+                    <button disabled className="expired-button">
+                      Expired
+                    </button>
+                  ) : submittedQuizIds.has(quiz.id) ? (
+                    <button onClick={() => handleViewChange('results', quiz)}>
+                      Show Results
+                    </button>
+                  ) : (
+                    <button onClick={() => handleViewChange('takeQuiz', quiz)}>
+                      Start Quiz
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
     );
   };
-  
   const renderQuizHistory = () => {
     if (loading) return <div className="loading">Loading your quiz history...</div>;
-    if (error) return <div className="error">{error}</div>;
+    
+    // If there's no email set yet, show a friendly message instead of an error
+    if (!studentEmail) {
+      return (
+        <div className="past-quizzes">
+          <h1>Quiz History</h1>
+          <div className="empty-history-message text-center p-10">
+            <img 
+              src="/api/placeholder/300/200" 
+              alt="Login required" 
+              className="mx-auto mb-4"
+            />
+            <p className="no-history-text text-xl font-bold text-gray-700">
+              Please log in to view your quiz history
+            </p>
+          </div>
+        </div>
+      );
+    }
+    
+    // If there's an error but we have pastQuizzes data, we can still show it
+    if (error && pastQuizzes.length === 0) {
+      return (
+        <div className="past-quizzes">
+          <h1>Quiz History</h1>
+          <div className="error-message p-4 bg-red-100 text-red-700 rounded mb-4">
+            {error}
+            <button 
+              className="ml-2 text-blue-500 underline" 
+              onClick={() => {
+                setError(null);
+                fetchStudentProgress(studentEmail);
+              }}
+            >
+              Try again
+            </button>
+          </div>
+          <div className="empty-history-message text-center p-10">
+            <img 
+              src="/api/placeholder/300/200" 
+              alt="No quiz history" 
+              className="mx-auto mb-4"
+            />
+            <p className="no-history-text text-xl font-bold text-gray-700">
+              No quiz history to display
+            </p>
+          </div>
+        </div>
+      );
+    }
     
     return (
       <div className="past-quizzes">
         <h1>Quiz History</h1>
+        {error && (
+          <div className="error-message p-4 bg-red-100 text-red-700 rounded mb-4">
+            {error}
+            <button 
+              className="ml-2 text-blue-500 underline" 
+              onClick={() => {
+                setError(null);
+                fetchStudentProgress(studentEmail);
+              }}
+            >
+              Try again
+            </button>
+          </div>
+        )}
         {pastQuizzes.length === 0 ? (
-          <p>No quiz history available</p>
+          <div className="empty-history-message text-center p-10">
+            <img 
+              src="/api/placeholder/300/200" 
+              alt="No quiz history" 
+              className="mx-auto mb-4"
+            />
+            <p className="no-history-text text-xl font-bold text-gray-700">
+              You haven't taken any quizzes yet
+            </p>
+          </div>
         ) : (
           <table className="history-table">
             <thead>
@@ -235,20 +391,20 @@ function StudentDashboard() {
       <div >
         <h1>Quiz</h1>
         <div className="tab-buttons">
-          <button 
+          <button
             className={`tab-button ${activeTab === 'activeQuizzes' ? 'active' : ''}`}
             onClick={() => setActiveTab('activeQuizzes')}
           >
             Show Active Quizzes
           </button>
-          <button 
+          <button
             className={`tab-button ${activeTab === 'quizHistory' ? 'active' : ''}`}
             onClick={() => setActiveTab('quizHistory')}
           >
             Quiz History
           </button>
         </div>
-        
+
         {activeTab === 'activeQuizzes' ? renderActiveQuizzes() : renderQuizHistory()}
       </div>
     );
@@ -271,7 +427,7 @@ function StudentDashboard() {
   const renderQuizResults = () => {
     if (loading) return <div className="loading">Loading your results...</div>;
     if (!quizResults) return <div className="no-results">No results available</div>;
-    
+
     if (!quizResults.submitted) {
       return (
         <div className="no-results">
@@ -281,7 +437,7 @@ function StudentDashboard() {
         </div>
       );
     }
-    
+
     return (
       <div className="quiz-results">
         <h2>Your Results: {selectedQuiz.title}</h2>
@@ -289,7 +445,7 @@ function StudentDashboard() {
           <h3>Score: {quizResults.score}</h3>
           <p>Submitted: {new Date(quizResults.submittedtime).toLocaleString()}</p>
         </div>
-        
+
         <div className="question-results">
           <h3>Question Review</h3>
           {quizResults.answers.map((answer, index) => (
@@ -308,7 +464,7 @@ function StudentDashboard() {
             </div>
           ))}
         </div>
-        
+
         <div className="actions">
           <button onClick={() => handleViewChange('leaderboard', selectedQuiz)}>
             View Leaderboard
@@ -323,7 +479,7 @@ function StudentDashboard() {
 
   const renderLeaderboard = () => {
     if (loading) return <div className="loading">Loading leaderboard...</div>;
-    
+
     return (
       <div className="leaderboard-quiz">
         <h2>Leaderboard: {selectedQuiz.title}</h2>
@@ -341,8 +497,8 @@ function StudentDashboard() {
             </thead>
             <tbody>
               {leaderboard.map((entry) => (
-                <tr 
-                  key={entry.email} 
+                <tr
+                  key={entry.email}
                   className={entry.email === studentEmail ? 'current-user' : ''}
                 >
                   <td>{entry.rank}</td>
@@ -396,27 +552,27 @@ function QuizTaker({ quiz, studentEmail, onComplete }) {
   }, [answers, currentQuestionIndex, quiz?.id, studentEmail]);
 
   // Add this to QuizTaker useEffect initialization
-useEffect(() => {
-  if (quiz?.id && studentEmail) {
-    // Check for saved progress
-    const savedProgress = localStorage.getItem(`quiz-progress-${quiz.id}-${studentEmail}`);
-    if (savedProgress) {
-      try {
-        const progressData = JSON.parse(savedProgress);
-        // Only restore if it's for the same quiz and not too old (e.g., within 24 hours)
-        const isRecent = (new Date().getTime() - progressData.timestamp) < 24 * 60 * 60 * 1000;
-        
-        if (progressData.quizId === quiz.id && isRecent) {
-          setAnswers(progressData.answers);
-          setCurrentQuestionIndex(progressData.currentQuestionIndex);
-          // Optional: Inform the user their progress was restored
+  useEffect(() => {
+    if (quiz?.id && studentEmail) {
+      // Check for saved progress
+      const savedProgress = localStorage.getItem(`quiz-progress-${quiz.id}-${studentEmail}`);
+      if (savedProgress) {
+        try {
+          const progressData = JSON.parse(savedProgress);
+          // Only restore if it's for the same quiz and not too old (e.g., within 24 hours)
+          const isRecent = (new Date().getTime() - progressData.timestamp) < 24 * 60 * 60 * 1000;
+
+          if (progressData.quizId === quiz.id && isRecent) {
+            setAnswers(progressData.answers);
+            setCurrentQuestionIndex(progressData.currentQuestionIndex);
+            // Optional: Inform the user their progress was restored
+          }
+        } catch (err) {
+          console.error("Error restoring quiz progress", err);
         }
-      } catch (err) {
-        console.error("Error restoring quiz progress", err);
       }
     }
-  }
-}, [quiz?.id, studentEmail]);
+  }, [quiz?.id, studentEmail]);
   // ⏱️ Timer setup based on quiz end time
   useEffect(() => {
     if (!quiz || !quiz.endTime) return;
@@ -473,7 +629,7 @@ useEffect(() => {
   const confirmSubmit = () => {
     const answeredCount = Object.keys(answers).length;
     const totalQuestions = quiz.questions.length;
-    
+
     // If not all questions are answered, show confirmation
     if (answeredCount < totalQuestions) {
       setShowConfirmModal(true);
@@ -486,7 +642,7 @@ useEffect(() => {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setShowConfirmModal(false);
-    
+
     if (submitted || loading || !quiz?.id || !studentEmail) return;
 
     try {
@@ -505,7 +661,7 @@ useEffect(() => {
         if (onComplete) onComplete(response.data.score);
       }, 3000);
       // Add this to handleSubmit function after successful submission
-localStorage.removeItem(`quiz-progress-${quiz.id}-${studentEmail}`);
+      localStorage.removeItem(`quiz-progress-${quiz.id}-${studentEmail}`);
     } catch (err) {
       console.error("Submission error:", err);
       setError(err.response?.data?.error || 'Failed to submit quiz.');
@@ -533,17 +689,17 @@ localStorage.removeItem(`quiz-progress-${quiz.id}-${studentEmail}`);
 
   return (
     <div className="quiz-taker">
-        <h2>{quiz.title}</h2>
-        <div className="quiz-progress">
-          <span>Question {currentQuestionIndex + 1} of {quiz.questions.length}</span>
-          <span>Answered: {answeredCount} of {quiz.questions.length}</span>
-        </div>
-        <div className={`timer ${getTimeColor()}`}>
-          Time Left: {formatTime(timeLeft)}
-        </div>
+      <h2>{quiz.title}</h2>
+      <div className="quiz-progress">
+        <span>Question {currentQuestionIndex + 1} of {quiz.questions.length}</span>
+        <span>Answered: {answeredCount} of {quiz.questions.length}</span>
+      </div>
+      <div className={`timer ${getTimeColor()}`}>
+        Time Left: {formatTime(timeLeft)}
+      </div>
 
       {error && <div className="error">{error}</div>}
-      
+
       {score !== null && (
         <div className="score-display">
           <h3>Quiz Submitted!</h3>

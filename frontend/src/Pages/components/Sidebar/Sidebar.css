@@ -4,7 +4,9 @@
   position: relative;
 }
 
-  
+  .sidebar{
+    margin-top: -1.5rem;
+  }
   .main .sidebarWrapper {
     width: 0%;
     flex: 0 0 13%;
@@ -13,7 +15,7 @@
   
   .main .sidebarWrapper .sidebar {
     width: 200px;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 30px);
     position: fixed;
     top: 70px;
     left: 0;
@@ -47,15 +49,6 @@
     border-radius: 20px;
   }
   
-  /* Brand/Logo area at top of sidebar */
-  .sidebar-brand {
-    padding: 20px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
   .toggle-sidebar-btn {
     background: transparent;
     border: none;
@@ -74,9 +67,7 @@
     background: rgba(255, 255, 255, 0.1);
     transform: rotate(180deg);
   }
-  
 
-  
   .main .sidebarWrapper .sidebar ul li {
     list-style: none;
     margin-bottom: 5px;
@@ -126,17 +117,6 @@
     margin-bottom: 20px;
     padding-left: 0;
   }
-  .main .content {
-    width: calc(100% - 10px); /* Replace percentage with calculation */
-    margin-left: 50px; /* Add this line to match sidebar width */
-    flex: 1; /* Replace fixed flex value */
-    transition: all 0.3s ease-in-out;
-    margin-top: 1rem;
-}
-.main .content.toggle {
-  width: 100%;
-  margin-left: 0; /* Add this line */
-}
 .main .sidebarWrapper.toggle {
   width: 0%;
   flex: 0 0 0%;

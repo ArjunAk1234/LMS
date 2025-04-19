@@ -15,6 +15,12 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.body.classList.add("admin-body");
+    return () => {
+      document.body.classList.remove("admin-body");
+    };
+  }, []);
+  useEffect(() => {
     fetchAllQuizzes();
   }, []);
 
@@ -145,7 +151,7 @@ function AdminDashboard() {
         {submissions.length === 0 ? (
           <p>No submissions yet</p>
         ) : (
-          <table>
+          <table className='progress-table'>
             <thead>
               <tr>
                 <th>Email</th>
@@ -166,7 +172,13 @@ function AdminDashboard() {
             </tbody>
           </table>
         )}
-        <button onClick={() => handleViewChange('allQuizzes')}>Back to Quizzes</button>
+        <button
+  onClick={() => handleViewChange('allQuizzes')}
+  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 mt-4"
+>
+  Back to Quizzes
+</button>
+
       </div>
     );
   };
@@ -231,7 +243,7 @@ function AdminDashboard() {
         {leaderboard.length === 0 ? (
           <p>No submissions yet</p>
         ) : (
-          <table>
+          <table className='progress-table'>
             <thead>
               <tr>
                 <th>Rank</th>
@@ -252,8 +264,12 @@ function AdminDashboard() {
             </tbody>
           </table>
         )}
-        <button onClick={() => handleViewChange('allQuizzes')}>Back to Quizzes</button>
-      </div>
+<button
+  onClick={() => handleViewChange('allQuizzes')}
+  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 mt-4"
+>
+  Back to Quizzes
+</button>      </div>
     );
   };
 

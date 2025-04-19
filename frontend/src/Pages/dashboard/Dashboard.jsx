@@ -139,9 +139,10 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <div className="dashboard-container">
+        <div className='title-container'>
         <h1 className="dashboard-title">
           Hi, {username} let's make today count!</h1>
-
+        </div>
         <div className="dashboard-grid">
           {/* Courses Summary Card */}
           {/* Courses Card */}

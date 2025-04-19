@@ -56,3 +56,64 @@ input:-webkit-autofill:active {
   font-family: 'Poppins', 'Open Sans', sans-serif;
 }
 
+
+/* Base styles that apply to all pages */
+.main .content {
+  width: 95vw; /* Replace percentage with calculation */
+  flex: 1; /* Replace fixed flex value */
+  transition: all 0.3s ease-in-out;
+  margin-top: 1rem;
+}
+
+.main .content.toggle {
+  width: 95vw;
+  margin-left: -3.5vw; /* Add this line */
+}
+
+/* Page-specific overrides using data attributes */
+.main[data-page="dashboard"] .content {
+  margin-left: 0.5vw
+}
+
+.main[data-page="dashboard"] .content.toggle {
+  margin-left: -2vw
+}
+
+.main[data-page="course"] .content {
+  margin-left: 3vw;
+}
+
+.main[data-page="course"] .content.toggle {
+  margin-left: 1vw;
+}
+
+.main[data-page="assignment"] .content {
+  margin-left: 3vw;
+}
+
+.main[data-page="assignment"] .content.toggle {
+  margin-left: 1vw;
+}
+
+.main[data-page="leaderboard"] .content {
+  margin-left: 3vw;
+}
+
+.main[data-page="leaderboard"] .content.toggle {
+  margin-left: 1vw;
+}
+
+.main[data-page="quiz"] .content {
+  margin-left: 3vw;
+}
+
+.main[data-page="quiz"] .content.toggle {
+  margin-left: 1vw;
+}
+.main[data-page="userprofile"] .content {
+  margin-left: 3vw;
+}
+
+.main[data-page="userprofile"] .content.toggle {
+  margin-left: -1vw;
+}

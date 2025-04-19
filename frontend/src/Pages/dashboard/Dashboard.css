@@ -6,25 +6,40 @@ body.dashboard-body {
   background-color: white;
   background-attachment: fixed;
   background-size: cover;
+  background-image: url('white.png');
+  background-size: 50%; 
+  background-position: center;
+  background-repeat: repeat;         
 }
-/* Dashboard main layout */
 .dashboard {
   padding: 1.5rem;
-  background-color: #f9fafb;
-  min-height: 100vh;
+  background-color: rgba(255, 255, 255, 0);
+    min-height: 100vh;
 }
-
+.title-container{
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+  border-radius: 8px;      
+  background-color:white;
+  width: fit-content;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;       
+}
 .dashboard-container {
-  width: 100%;
-  margin: 0 auto;
+  width: 77vw;
+  margin-left: 4vw;
+  animation: fadeIn 0.5s ease;
+
 }
 
 .dashboard-title {
   font-size: 2rem;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 3rem;
-  margin-top: 2rem;
+
 }
 
 /* Dashboard Grid Layout */
@@ -80,7 +95,7 @@ body.dashboard-body {
 .dashboard-card {
   background-color: white;
   padding:  2.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
   border-radius: 0.75rem;
   transition: all 0.3s;
   width: 95%;
