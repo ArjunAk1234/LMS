@@ -124,7 +124,7 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 func AddUserDetails(c *gin.Context) {
-	// Manually extract form-data (since ShouldBind doesn't support files)
+	// Extract form-data
 	email := c.PostForm("email")
 	fullName := c.PostForm("full_name")
 	age := c.PostForm("age")
@@ -135,123 +135,158 @@ func AddUserDetails(c *gin.Context) {
 	parentContact := c.PostForm("parent_contact")
 	schoolName := c.PostForm("school_name")
 	grade := c.PostForm("grade")
-	admissionNo := c.PostForm("admission_no")
+
 	if email == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
 		return
 	}
-	// Convert email to folder-friendly format (replace @ and .)
+
+	// Convert email to folder-friendly format
 	emailFolder := sanitizeEmail(email)
 	userFolder := filepath.Join("uploads", emailFolder)
+
 	if err := os.MkdirAll(userFolder, os.ModePerm); err != nil {
 		log.Printf("Error creating user directory: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user folder", "details": err.Error()})
 		return
 	}
-	// Handle file uploads
-	photo, err1 := c.FormFile("photo")
-	certificate, err2 := c.FormFile("certificate")
-	payment, err3 := c.FormFile("payment")
-	if err1 != nil || err2 != nil || err3 != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Photo and certificate are required"})
+
+	// Handle photo upload
+	photo, err := c.FormFile("photo")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Profile photo is required"})
 		return
 	}
+
 	photoPath := filepath.Join(userFolder, "photo.jpg")
-	certPath := filepath.Join(userFolder, "certificate.pdf")
-	paymentPath := filepath.Join(userFolder, "payment.jpg")
 	if err := c.SaveUploadedFile(photo, photoPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save photo"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save profile photo"})
 		return
 	}
-	if err := c.SaveUploadedFile(certificate, certPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save certificate"})
-		return
-	}
-	if err := c.SaveUploadedFile(payment, paymentPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save payment"})
-		return
-	}
+
 	// Save details to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
 	userDetails := bson.M{
-		"email":            email,
-		"full_name":        fullName,
-		"age":              age,
-		"address":          address,
-		"phone":            phone,
-		"father_name":      fatherName,
-		"mother_name":      motherName,
-		"parent_contact":   parentContact,
-		"school_name":      schoolName,
-		"grade":            grade,
-		"admission_no":     admissionNo,
-		"photo_path":       photoPath,
-		"certificate_path": certPath,
-		"payment_path":     paymentPath,
-		"payment_status":   "Pending",
+		"email":        email,
+		"full_name":    fullName,
+		"age":          age,
+		"address":      address,
+		"phone":        phone,
+		"father_name":  fatherName,
+		"mother_name":  motherName,
+		"parent_contact": parentContact,
+		"school_name":  schoolName,
+		"grade":        grade,
+		"photo_path":   photoPath,
 	}
-	_, err := detailsCollection.InsertOne(ctx, userDetails)
+
+	_, err = detailsCollection.InsertOne(ctx, userDetails)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save user details"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User details added successfully!", "folder": userFolder})
+
+	c.JSON(http.StatusOK, gin.H{"message": "User details added successfully!", "photo": photoPath})
 }
 
+
 func UpdateUserDetails(c *gin.Context) {
+	// Extract form-data
 	email := c.PostForm("email")
+	fullName := c.PostForm("full_name")
+	age := c.PostForm("age")
+	address := c.PostForm("address")
+	phone := c.PostForm("phone")
+	fatherName := c.PostForm("father_name")
+	motherName := c.PostForm("mother_name")
+	parentContact := c.PostForm("parent_contact")
+	schoolName := c.PostForm("school_name")
+	grade := c.PostForm("grade")
+
 	if email == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
 		return
 	}
-	// Extract other fields (except email, photo, and certificate)
-	updateData := bson.M{}
-	if fullName := c.PostForm("full_name"); fullName != "" {
-		updateData["full_name"] = fullName
+
+	// Convert email to folder-friendly format
+	emailFolder := sanitizeEmail(email)
+	userFolder := filepath.Join("uploads", emailFolder)
+
+	// Create update document
+	updateData := bson.M{
+		"full_name":      fullName,
+		"age":            age,
+		"address":        address,
+		"phone":          phone,
+		"father_name":    fatherName,
+		"mother_name":    motherName,
+		"parent_contact": parentContact,
+		"school_name":    schoolName,
+		"grade":          grade,
 	}
-	if age := c.PostForm("age"); age != "" {
-		updateData["age"], _ = strconv.Atoi(age)
+
+	// Handle photo upload if a new photo is provided
+	photo, err := c.FormFile("photo")
+	if err == nil { // No error means a file was uploaded
+		// Ensure user directory exists
+		if err := os.MkdirAll(userFolder, os.ModePerm); err != nil {
+			log.Printf("Error creating user directory: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user folder", "details": err.Error()})
+			return
+		}
+
+		// Save the new photo
+		photoPath := filepath.Join(userFolder, "photo.jpg")
+		if err := c.SaveUploadedFile(photo, photoPath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save profile photo"})
+			return
+		}
+
+		// Add photo path to update data
+		updateData["photo_path"] = photoPath
 	}
-	if address := c.PostForm("address"); address != "" {
-		updateData["address"] = address
-	}
-	if phone := c.PostForm("phone"); phone != "" {
-		updateData["phone"] = phone
-	}
-	if fatherName := c.PostForm("father_name"); fatherName != "" {
-		updateData["father_name"] = fatherName
-	}
-	if motherName := c.PostForm("mother_name"); motherName != "" {
-		updateData["mother_name"] = motherName
-	}
-	if parentContact := c.PostForm("parent_contact"); parentContact != "" {
-		updateData["parent_contact"] = parentContact
-	}
-	if schoolName := c.PostForm("school_name"); schoolName != "" {
-		updateData["school_name"] = schoolName
-	}
-	if grade := c.PostForm("grade"); grade != "" {
-		updateData["grade"] = grade
-	}
-	if admissionNo := c.PostForm("admission_no"); admissionNo != "" {
-		updateData["admission_no"] = admissionNo
-	}
-	if len(updateData) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No fields to update"})
-		return
-	}
-	// Update in MongoDB
+
+	// Update details in MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
 	filter := bson.M{"email": email}
 	update := bson.M{"$set": updateData}
-	_, err := detailsCollection.UpdateOne(ctx, filter, update)
+	options := options.Update().SetUpsert(true) // Create if doesn't exist
+
+	result, err := detailsCollection.UpdateOne(ctx, filter, update, options)
 	if err != nil {
+		log.Printf("Error updating user details: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user details"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User details updated successfully"})
+
+	if result.MatchedCount == 0 && result.UpsertedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	responseMessage := "User details updated successfully!"
+	if result.UpsertedCount > 0 {
+		responseMessage = "User details created successfully!"
+	}
+	// If a photo was updated, include it in the response
+if _, hasPhoto := updateData["photo_path"]; hasPhoto {
+	c.JSON(http.StatusOK, gin.H{
+	  "message": responseMessage,
+	  "matched": result.MatchedCount,
+	  "upserted": result.UpsertedCount,
+	  "photo": updateData["photo_path"], // Include photo path
+	})
+  } else {
+	c.JSON(http.StatusOK, gin.H{
+	  "message": responseMessage,
+	  "matched": result.MatchedCount,
+	  "upserted": result.UpsertedCount,
+	})
+  }
 }
 
 func GetUserDetails(c *gin.Context) {
@@ -345,7 +380,7 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully!"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "User registered successfully!"})
 	leaderboardEntry := bson.M{"username": input.Username, "points": 0}
 	_, err = leaderboardCollection.InsertOne(ctx, leaderboardEntry)
 	if err != nil {
@@ -2132,6 +2167,48 @@ func deleteCourse(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Course and its data deleted successfully"})
 }
+func ForgotPassword(c *gin.Context) {
+	var input struct {
+	Email       string `json:"email"`
+	NewPassword string `json:"newPassword"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Find user to confirm they exist
+	var user User
+	err := userCollection.FindOne(ctx, bson.M{"email": input.Email}).Decode(&user)
+	if err != nil {
+		fmt.Println("User not found for reset:", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Hash the new password
+	hashedPassword, err := HashPassword(input.NewPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
+	// Update password in DB
+	_, err = userCollection.UpdateOne(ctx,
+		bson.M{"email": input.Email},
+		bson.M{"$set": bson.M{"password": hashedPassword}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
+}
 func main() {
 	router := gin.Default()
 	// router.Use(func(c *gin.Context) {
@@ -2165,13 +2242,14 @@ func main() {
 	router.POST("/add-details", AddUserDetails)
 	router.POST("/check-role", CheckUserRole)
 	router.PUT("/verify-payment/:email", VerifyPayment)
-	router.POST("/updateuser/:email", UpdateUserDetails)
+	router.POST("/update-details", UpdateUserDetails)
 	router.GET("/students", GetAllStudents)
 	router.GET("/userdetails/:email", GetUserDetails)
 	router.POST("/logout", Logout)
 	router.GET("/userm", userm)
 	router.GET("/username", getusername)
 	router.GET("/username/email/:email", getusername1)
+	router.POST("/forgotpassword", ForgotPassword)
 
 	admin := router.Group("/admin")
 	admin.POST("/course", createCourse)
