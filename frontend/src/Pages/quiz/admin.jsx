@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import './admin.css'
+
 function AdminDashboard() {
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -323,45 +325,81 @@ function QuizCreator({ onQuizCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validate form
+  
+    // Validate form first
     if (!title || !startTime || !endTime) {
-      setError('Please fill all required fields');
-      return;
-    }
-
-    if (questions.some(q => !q.question || q.options.some(opt => !opt) || !q.answer)) {
-      setError('Please complete all questions with options and answers');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      // Format dates to RFC3339
-      const formattedStartTime = new Date(startTime).toISOString();
-      const formattedEndTime = new Date(endTime).toISOString();
-
-      await axios.post('http://localhost:8000/admin/create-quiz', {
-        title,
-        questions,
-        startTime: formattedStartTime,
-        endTime: formattedEndTime
+      Swal.fire({
+        title: 'Missing Information',
+        text: 'Please fill all required fields',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6'
       });
-
-      // Reset form
-      setTitle('');
-      setStartTime('');
-      setEndTime('');
-      setQuestions([{ question: '', options: ['', '', '', ''], answer: '' }]);
-      setError(null);
-
-      // Notify parent component
-      onQuizCreated();
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to create quiz');
-      setLoading(false);
+      return;
     }
+  
+    if (questions.some(q => !q.question || q.options.some(opt => !opt) || !q.answer)) {
+      Swal.fire({
+        title: 'Incomplete Questions',
+        text: 'Please complete all questions with options and answers',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+  
+    // If validation passes, show confirmation dialog
+    Swal.fire({
+      title: 'Create Quiz?',
+      text: `Are you sure you want to create the quiz "${title}" with ${questions.length} question(s)?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, create it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          // Format dates to RFC3339
+          const formattedStartTime = new Date(startTime).toISOString();
+          const formattedEndTime = new Date(endTime).toISOString();
+  
+          await axios.post('http://localhost:8000/admin/create-quiz', {
+            title,
+            questions,
+            startTime: formattedStartTime,
+            endTime: formattedEndTime
+          });
+  
+          // Show success message
+          Swal.fire({
+            title: 'Success!',
+            text: 'Quiz has been created successfully',
+            icon: 'success',
+            confirmButtonColor: '#3085d6'
+          });
+  
+          // Reset form
+          setTitle('');
+          setStartTime('');
+          setEndTime('');
+          setQuestions([{ question: '', options: ['', '', '', ''], answer: '' }]);
+          setError(null);
+  
+          // Notify parent component
+          onQuizCreated();
+          setLoading(false);
+        } catch (err) {
+          Swal.fire({
+            title: 'Error!',
+            text: 'Failed to create quiz',
+            icon: 'error',
+            confirmButtonColor: '#3085d6'
+          });
+          setLoading(false);
+        }
+      }
+    });
   };
 
   return (

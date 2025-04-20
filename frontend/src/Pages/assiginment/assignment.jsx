@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./assignment.css";
+import { toast } from "react-toastify";
+import Swal from 'sweetalert2';
+
 
 const Assignment = () => {
   const [courses, setCourses] = useState([]);
@@ -76,52 +79,69 @@ const Assignment = () => {
   };
 
   const deleteAssignment = (courseName, assignmentName) => {
-    // Show confirmation dialog
-    if (!confirm(`Are you sure you want to delete the assignment "${assignmentName}" from course "${courseName}"? This action cannot be undone and will delete all student submissions.`)) {
-      return; // User cancelled the deletion
-    }
-
-    // Call the API to delete the assignment
-    fetch(`http://localhost:8000/admin/course/${courseName}/deleteassignment/${assignmentName}`, {
-      method: 'DELETE',
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to delete assignment');
-        }
-        return response.json();
-      })
-      .then(data => {
-        alert('Assignment deleted successfully');
-        // Remove the assignment from the assignments array
-        setAssignments(assignments.filter(a => a.name !== assignmentName));
-
-        // Clear any related state
-        const newSubmissions = { ...submissions };
-        delete newSubmissions[assignmentName];
-        setSubmissions(newSubmissions);
-
-        const newExpandedAssignments = { ...expandedAssignments };
-        delete newExpandedAssignments[assignmentName];
-        setExpandedAssignments(newExpandedAssignments);
-
-        // Clear any other assignment-specific state
-        const newGradeData = { ...gradeData };
-        delete newGradeData[assignmentName];
-        setGradeData(newGradeData);
-
-        const newSearchGraded = { ...searchGraded };
-        delete newSearchGraded[assignmentName];
-        setSearchGraded(newSearchGraded);
-
-        const newSearchUngraded = { ...searchUngraded };
-        delete newSearchUngraded[assignmentName];
-        setSearchUngraded(newSearchUngraded);
-      })
-      .catch(error => {
-        console.error('Error deleting assignment:', error);
-        alert('Failed to delete the assignment. Please try again.');
-      });
+    // Use SweetAlert for confirmation
+    Swal.fire({
+      title: 'Are you sure?',
+      html: `Do you want to delete the assignment <strong>"${assignmentName}"</strong> from course <strong>"${courseName}"</strong>?<br><br>This action cannot be undone and will delete all student submissions.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // User confirmed, proceed with deletion
+        fetch(`http://localhost:8000/admin/course/${courseName}/deleteassignment/${assignmentName}`, {
+          method: 'DELETE',
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to delete assignment');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Show success message with SweetAlert
+            Swal.fire({
+              title: 'Deleted!',
+              text: 'Assignment has been deleted successfully.',
+              icon: 'success',
+              confirmButtonColor: '#3085d6'
+            });
+            
+            // Remove the assignment from the assignments array
+            setAssignments(assignments.filter(a => a.name !== assignmentName));
+  
+            // Clear any related state
+            const newSubmissions = { ...submissions };
+            delete newSubmissions[assignmentName];
+            setSubmissions(newSubmissions);
+  
+            const newExpandedAssignments = { ...expandedAssignments };
+            delete newExpandedAssignments[assignmentName];
+            setExpandedAssignments(newExpandedAssignments);
+  
+            // Clear any other assignment-specific state
+            const newGradeData = { ...gradeData };
+            delete newGradeData[assignmentName];
+            setGradeData(newGradeData);
+  
+            const newSearchGraded = { ...searchGraded };
+            delete newSearchGraded[assignmentName];
+            setSearchGraded(newSearchGraded);
+  
+            const newSearchUngraded = { ...searchUngraded };
+            delete newSearchUngraded[assignmentName];
+            setSearchUngraded(newSearchUngraded);
+          })
+          .catch(error => {
+            console.error('Error deleting assignment:', error);
+            
+            toast.error("Error deleting assignment")
+          });
+      }
+    });
   };
 
   const selectCourse = async (course) => {
@@ -192,7 +212,7 @@ const Assignment = () => {
 
   const createAssignment = async () => {
     if (!newAssignment.name || !newAssignment.description || !newAssignment.due_date || !newAssignment.courseName) {
-      alert("Please fill in all fields and select a course.");
+      toast.error("Please fill in all fields and select a course.");
       return;
     }
 
@@ -221,10 +241,10 @@ const Assignment = () => {
         selectCourse(selectedCourse);
       }
 
-      alert("Assignment created successfully!");
+      toast.success("Assignment created successfully")
     } catch (error) {
       console.error("Error creating assignment:", error);
-      alert("Error creating assignment. Please try again.");
+      toast.error("Error creating assignment. Please try again.");
     }
   };
 
@@ -234,12 +254,12 @@ const Assignment = () => {
 
   const uploadAssignment = async (assignment) => {
     if (!file) {
-      alert("Please select a file.");
+      toast.error("Please select a file.");
       return;
     }
 
     if (!studentName) {
-      alert("Student name not found. Please log in.");
+      toast.error("Student name not found. Please log in.");
       return;
     }
 
@@ -254,7 +274,7 @@ const Assignment = () => {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      alert("Assignment submitted successfully!");
+      toast.success("Assignment submitted successfully!");
 
       // After successful submission, update the submission status
       const status = await checkSubmissionStatus(selectedCourse.name, assignment.name);
@@ -319,7 +339,7 @@ const Assignment = () => {
         `http://localhost:8000/admin/courses/${selectedCourse.name}/assignments/${assignmentName}/students/${studentName}/grade`,
         { grade: gradeInfo.grade, feedback: gradeInfo.feedback }
       );
-      alert("Grade and feedback submitted!");
+      toast.success("Grade and feedback submitted!");
 
       // Clear the grade data for this student
       setGradeData(prev => {
@@ -350,7 +370,7 @@ const Assignment = () => {
         `http://localhost:8000/admin/courses/${selectedCourse.name}/assignments/${assignmentName}/students/${studentName}/grade`,
         { grade: gradeInfo.grade, feedback: gradeInfo.feedback }
       );
-      alert("Grade and feedback updated!");
+      toast.success("Grade and feedback updated!");
 
       // Clear the grade data for this student
       setGradeData(prev => {
@@ -512,7 +532,7 @@ const Assignment = () => {
                       {isAdmin && (
                         <button
                           onClick={() => deleteAssignment(selectedCourse.name, assignment.name)}
-                          className="delete-assignment-btn bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                          className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded"
                         >
                           Delete Assignment
                         </button>
@@ -566,13 +586,32 @@ const Assignment = () => {
                           <>
                             <input type="file" onChange={handleFileChange} className="border p-2" />
                             <button
-                              className="submit-assignment-btn bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600"
-                              onClick={() => uploadAssignment(assignment)}
-                            >
-                              {submissionStatuses[assignment.name] && submissionStatuses[assignment.name].submitted
-                                ? "Resubmit Assignment"
-                                : "Submit Assignment"}
-                            </button>
+  className="submit-assignment-btn bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600"
+  onClick={() => {
+    const isResubmission = submissionStatuses[assignment.name] && 
+                           submissionStatuses[assignment.name].submitted;
+    
+    Swal.fire({
+      title: isResubmission ? 'Resubmit Assignment?' : 'Submit Assignment?',
+      text: isResubmission 
+        ? `Are you sure you want to resubmit your work for "${assignment.name}"? This will replace your previous submission.` 
+        : `Are you sure you want to submit your work for "${assignment.name}"?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: isResubmission ? 'Yes, resubmit' : 'Yes, submit'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        uploadAssignment(assignment);
+      }
+    });
+  }}
+>
+  {submissionStatuses[assignment.name] && submissionStatuses[assignment.name].submitted
+    ? "Resubmit Assignment"
+    : "Submit Assignment"}
+</button>
                           </>
                         )}
                       </div>

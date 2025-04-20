@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import './student.css';
+
 function StudentDashboard() {
   const [activeQuizzes, setActiveQuizzes] = useState([]);
   const [pastQuizzes, setPastQuizzes] = useState([]);
@@ -225,13 +227,13 @@ function StudentDashboard() {
         {!Array.isArray(activeQuizzes) || activeQuizzes.length === 0 ? (
           <div className="empty-quizzes-message text-center p-10">
             <img 
-  src="course.png" 
-  alt="No courses available" 
+  src="quiz.gif" 
+  alt="No quizzes available" 
   className="mx-auto mb-4 w-1/2 h-1/2 object-contain"
 />
 
             <p className="no-quizzes-text text-xl font-bold text-gray-700">
-              No active quizzes available right now
+            No quizzes at the moment — enjoy your break and come back refreshed!
             </p>
           </div>
         ) : (
@@ -629,16 +631,40 @@ function QuizTaker({ quiz, studentEmail, onComplete }) {
   const confirmSubmit = () => {
     const answeredCount = Object.keys(answers).length;
     const totalQuestions = quiz.questions.length;
-
-    // If not all questions are answered, show confirmation
+  
+    // If not all questions are answered, show SweetAlert warning confirmation
     if (answeredCount < totalQuestions) {
-      setShowConfirmModal(true);
+      Swal.fire({
+        title: 'Unanswered Questions',
+        html: `You've only answered <b>${answeredCount}</b> out of <b>${totalQuestions}</b> questions.<br><br>Are you sure you want to submit?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, submit anyway',
+        cancelButtonText: 'No, let me review'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          handleSubmit();
+        }
+      });
     } else {
-      // All questions answered, submit directly
-      handleSubmit();
+      // All questions answered, still confirm but with a different message
+      Swal.fire({
+        title: 'Submit Quiz?',
+        text: 'Are you sure you want to submit your quiz? You will not be able to change your answers after submission.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, submit my quiz'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          handleSubmit();
+        }
+      });
     }
   };
-
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setShowConfirmModal(false);

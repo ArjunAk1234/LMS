@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./course.css";
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 export default function CourseManagement() {
   const [courses, setCourses] = useState([]);
@@ -46,40 +47,59 @@ export default function CourseManagement() {
     }
   };
   const deleteCourse = (courseName) => {
-    // Show confirmation dialog
-    if (!confirm(`Are you sure you want to delete the course "${courseName}"? This action cannot be undone.`)) {
-      return; // User cancelled the deletion
-    }
-
-    let fetchOptions = {
-      method: 'DELETE',
-    };
-    const authToken = localStorage.getItem('authToken');
-    if (authToken) {
-      fetchOptions.headers = { 'Authorization': `Bearer ${authToken}` };
-    }
-    // Call the API to delete the course
-    fetch(`http://localhost:8000/admin/deletecourse/${courseName}`, fetchOptions)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to delete course');
+    // Using SweetAlert2
+    Swal.fire({
+      title: 'Are you sure?',
+      text: `Do you want to delete the course "${courseName}"? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // User confirmed, proceed with deletion
+        let fetchOptions = {
+          method: 'DELETE',
+        };
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+          fetchOptions.headers = { 'Authorization': `Bearer ${authToken}` };
         }
-        return response.json();
-      })
-      .then(data => {
-        toast.success('Course deleted successfully');
-        // Remove the course from the courses array
-        setCourses(courses.filter(course => course.name !== courseName));
-        // Clear selected course
-        setSelectedCourse(null);
-        // Clear resources and notes
-        setResources([]);
-        setNotes([]);
-      })
-      .catch(error => {
-        console.error('Error deleting course:', error);
-        toast.error('Failed to delete the course. Please try again.');
-      });
+        
+        fetch(`http://localhost:8000/admin/deletecourse/${courseName}`, fetchOptions)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to delete course');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Show success message with SweetAlert
+            Swal.fire(
+              'Deleted!',
+              'Course has been deleted successfully.',
+              'success'
+            );
+            
+            setCourses(courses.filter(course => course.name !== courseName));
+            setSelectedCourse(null);
+            setResources([]);
+            setNotes([]);
+          })
+          .catch(error => {
+            console.error('Error deleting course:', error);
+            
+            // Show error message with SweetAlert
+            Swal.fire(
+              'Error!',
+              'Failed to delete the course. Please try again.',
+              'error'
+            );
+          });
+      }
+    });
   };
   const selectCourse = async (course) => {
     setSelectedCourse(course);
@@ -100,8 +120,10 @@ export default function CourseManagement() {
       setNewCourse("");
       setShowCreateCourse(false);
       fetchCourses();
+      toast.success("Course created Successfully")
     } catch (error) {
       console.error("Error creating course:", error);
+      toast.error("Error creating course")
     }
   };
 
@@ -147,6 +169,8 @@ export default function CourseManagement() {
       selectCourse(selectedCourse);
     } catch (error) {
       console.error("Error uploading note:", error);
+      toast.error("Failed to upload note.");
+
     }
   };
 
